@@ -5,13 +5,13 @@
 
 
 # Modules to use in this file:
-import colors   # Allows to modify printed text.
+import colors   # Custom module: Allows to modify printed text.
 
 class Element () :
     """
     Parent class.
 
-    Attr:
+    Attrs:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
     """
@@ -27,15 +27,14 @@ class Wall(Element) :
     Args:
         color (object | None): The color can be set using the custom module "colors". If no color is desired, None can be used.
     
-    Attr:
+    Attrs:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
-        icon (str): Printed icon. This is set by default as "██" and cannot be changed.
         sprite (str): Icon that will be printed. String containing the ANSI scape codes and the object's icon.
     """
     def __init__(self, color) :
         super().__init__()
-        self.icon = "██"
+        self._icon = "██"
         self.color = color
         self.sprite = self.gen_sprite()
 
@@ -48,9 +47,9 @@ class Wall(Element) :
         """
 
         if self.color == None :
-            return self.icon
+            return self._icon
         else :
-            return f"{self.color}{self.icon}{colors.Text.end}"
+            return f"{self.color}{self._icon}{colors.Text.end}"
         
     def set_in_screen(self, screen: object, x_location: int, y_location: int) :
         """
@@ -72,7 +71,7 @@ class Queue(Element) :
     Inherited class from Element.
     Represents a gray tile representing the queue.
 
-    Attr:
+    Attrs:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         icon (str): Printed icon. This is set by default as "██" and cannot be changed.
@@ -119,7 +118,7 @@ class Void(Element) :
     Inherited class from Element.
     Represents void, the abscence of an element in the screen.
 
-    Attr:
+    Attrs:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         sprite (str): Two blank spaces "  ". It cannot be changed.

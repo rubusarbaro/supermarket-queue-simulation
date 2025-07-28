@@ -1,14 +1,42 @@
-import emoji
-import functions
+###########################################
+##  Saúl R. Morales © 2025 MIT License   ##
+###########################################
+## This module contains the agents to interact in the environment.
+
+
+# Modules to use in this file:
+from math import inf as infinite    # Infinite number is used by Customer to chose Cashier.
+import emoji        # Allows to print emojis.
+import functions    # Custom module: Containts additional functions that are not contained in classes.
 
 class Entity():
+    """
+    Agent interacting in the environment.
+
+    Attrs:
+        x_location (int): Object location in the x axis of screen layout.
+        y_location (int): Object location in the y axis of screen layout.
+        environment (object): Environment where the agent interact.
+    """
     def __init__(self,environment: object):
         self.x_location = 0
         self.y_location = 0
         self.environment = environment
 
 class Cashier(Entity) :
-    def __init__(self,environment:object,x_location:int,y_location:int,scan_speed=0.1):
+    """
+    Inherited class from Entity.
+    Agent that emulates the behavior of a real life cashier (scan items).
+
+    Args:
+        environment (object): Environmentwhere this agent will interact.
+        x_location (int): Object location in the x axis of screen layout.
+        y_location (int): Object location in the y axis of screen layout.
+        scan_speed (float): Scanning speed of cashier. Default is 0.5 seconds per item.
+
+    Attrs:
+    """
+    def __init__(self,environment:object,x_location:int,y_location:int,scan_speed=0.5):
         self.icon = "🛃"
         self.x_location = x_location
         self.y_location = y_location
@@ -61,8 +89,6 @@ class Customer(Entity) :
         self.environment.screen.layout[y_location][x_location] = self.icon
 
     def choose_queue(self) :
-        from math import inf as infinite
-
         queue = None
 
         match self.customer_kind :
