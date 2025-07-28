@@ -1,11 +1,36 @@
-import colors
+###########################################
+##  Saúl R. Morales © 2025 MIT License   ##
+###########################################
+## This module contains simulation objects that agents can interact with.
+
+
+# Modules to use in this file:
+import colors   # Allows to modify printed text.
 
 class Element () :
+    """
+    Parent class.
+
+    Attr:
+        x_location (int): Object location in the x axis of screen layout.
+        y_location (int): Object location in the y axis of screen layout.
+    """
     def __init__(self):
         self.x_location = 0
         self.y_location = 0
     
 class Wall(Element) :
+    """
+    Inherited class from Element.
+    Represents a wall that agent cannot pass.
+
+    Attr:
+        x_location (int): Object location in the x axis of screen layout.
+        y_location (int): Object location in the y axis of screen layout.
+        icon (str): Printed icon. This is set by default as "██" and cannot be changed.
+        color (object | None): The color can be set using the custom module "colors". If no color is desired, None can be used.
+        sprite (str): Icon that will be printed. String containing the ANSI scape codes  and the object icon.
+    """
     def __init__(self, color) :
         super().__init__()
         self.icon = "██"

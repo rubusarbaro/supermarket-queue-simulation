@@ -15,7 +15,7 @@ class Environment :
 
     def start(self) :
         from entities import Customer
-        from misc import Label
+        from ui import Label
         from numpy import random
         from time import sleep
         import colors
@@ -26,7 +26,7 @@ class Environment :
             if i == 0 :
                 arrival_times.append(round(arrival_time,1))
             else :
-                arrival_times.append(arrival_times[i-1]+round(arrival_time,1))
+                arrival_times.append(round(arrival_times[i-1]+arrival_time,1))
 
         Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)
         time_label = Label(str(round(self.clock,2)),Label.regular)
