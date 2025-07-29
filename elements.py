@@ -30,11 +30,12 @@ class Wall(Element) :
     Attrs:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
+        icon (str): Printed icon. This is set by default as "██" and cannot be changed.
         sprite (str): Icon that will be printed. String containing the ANSI scape codes and the object's icon.
     """
     def __init__(self, color) :
         super().__init__()
-        self._icon = "██"
+        self.icon = "██"
         self.color = color
         self.sprite = self.gen_sprite()
 
@@ -47,9 +48,9 @@ class Wall(Element) :
         """
 
         if self.color == None :
-            return self._icon
+            return self.icon
         else :
-            return f"{self.color}{self._icon}{colors.Text.end}"
+            return f"{self.color}{self.icon}{colors.Text.end}"
         
     def set_in_screen(self, screen: object, x_location: int, y_location: int) :
         """
