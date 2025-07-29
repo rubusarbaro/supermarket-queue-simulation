@@ -5,9 +5,28 @@
 
 
 # Modules to use in this file:
-import functions
+from entities import Customer   # To create customer agents.
+from time import sleep          # Regulates simulation's internal clock.
+from ui import Label            # To display messages in the screen.
+#import emoji       # Allows printing emojis.
+import functions    # Custom module: Useful functions 
 
 class Environment :
+    """
+    This class coordinates all the agents and objects in the simulation.
+    The simulation runs at 0.1 seconds per step.
+
+    Args:
+        time_scale (float): Value must be greater than 0. Greater value means slower simulation.
+
+    Attributes:
+        screen (object): Screen  (layout) that displays the objects in the simulation.
+        clock (float): Internal clock.
+        cashiers (list): List of cashiers in the supermarket queue simulation.
+        customer_count (int): Customer quantity that the simulation has created.
+        customer (list): List of customer in the supermarket queue simulation.
+    """
+
     def __init__(self, time_scale=1.0):
         self.screen = None
         self.clock = 0.0
@@ -17,57 +36,50 @@ class Environment :
         self.customers = []
 
     def start(self) :
-        from entities import Customer
-        from ui import Label
-        from numpy import random
-        from time import sleep
-        import colors
+        """
+        Start simulation. To finish the simulation press CTRL+C.
+        This function only works with this specific simulation (supermarket queue).
+        """
 
-        arrival_times = []
-        for i in range(1000) :
-            arrival_time = random.exponential(30)
-            if i == 0 :
-                arrival_times.append(round(arrival_time,1))
-            else :
-                arrival_times.append(round(arrival_times[i-1]+arrival_time,1))
+        arrival_times = functions.generate_exponential_arrival_time(1000,15)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
 
-        Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)
-        time_label = Label(str(round(self.clock,2)),Label.regular)
+        Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)  # Elapsed time label shown at the bottom of the simulation.
+        time_label = Label(str(round(self.clock,2)),Label.regular)  # Elapsed time shown at the bottom of the simulation.
 
-        Label("Siguiente llegada:",Label.regular).set_in_screen(self.screen,0,31)
-        arrival_label = Label(str(arrival_times[self.customer_count]),Label.regular)
-        arrival_label.set_in_screen(self.screen,11,31)
+        Label("Siguiente llegada:",Label.regular).set_in_screen(self.screen,0,31)   # Label of time of next arrival shown at the bottom of the simulation.
+        arrival_label = Label(str(arrival_times[self.customer_count]),Label.regular)    # Next arrival time shown at the bottom of the simulation.
+        arrival_label.set_in_screen(self.screen,9,31)  # Place the next arrival time in the bottom of simulation.
 
-        self.screen.print_screen()
+        self.screen.print_screen()  #Initial screen printing.
 
-        while True :
-            print_screen = True
+        while True :    # Loop: This simulation will run until user press ctrl+C.
+            print_screen = True # Reset print_screen to FALSE. I will let it TRUE so the time will update.
 
-            for cashier in self.cashiers :
+            for cashier in self.cashiers :  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status :
-                    case "busy" :
+                    case "busy" :   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
                         if round(self.clock,1) == cashier.current_customer_complete_time :
                             cashier.release_customer()
-                    case "available" :
+                    case "available" :  # If the cashier is available and there is someone in their queue, call them.
                         if len(cashier.customer_queue) == 0 :
                             pass
-                        elif cashier.customer_queue[0].status == "ready" :
+                        elif cashier.customer_queue[0].status == "ready" :  # I used elif instead of else for a technical redundance (it was on purpose).
                             cashier.call_customer()
 
-            if round(self.clock,1) == arrival_times[self.customer_count] :
-                customer = Customer(self,"regular")
-                customer.customer_id = self.customer_count
-                customer.spawn(0,28)
-                print_screen = True
+            if round(self.clock,1) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
+                customer = Customer(self,functions.random_customer_kind(0.03))  # Create a customer; "observer" customer is generated with a probability of 3%.
+                customer.customer_id = self.customer_count + 1
+                customer.spawn(0,28)    # Spawn point set in (0,28).
                 self.customer_count += 1
-                arrival_label.text = str(arrival_times[self.customer_count])
-                arrival_label.set_in_screen(self.screen,11,31)
+                arrival_label.text = str(arrival_times[self.customer_count])    # Update next arrival label.
+                arrival_label.set_in_screen(self.screen,9,31)
+                print_screen = True # Change print_screen to True, to print the new customer.
                 
 
-            if len(self.customers) == 0 :
+            if len(self.customers) == 0 :   # If there are not customers in the simulation, do nothing.
                 pass
             else :
-                for customer in self.customers :
+                for customer in self.customers :    # Evaluates the status for each customer in the simulation an execute a method or action according their status.
                     match customer.status :
                         case "exiting" :
                             customer.exit_store_clocked()
@@ -83,15 +95,17 @@ class Environment :
                         case "finished" :
                             del customer
 
-            time_label.text = str(round(self.clock,2))
+            time_label.text = str(round(self.clock,2))  # Update current time label.
             time_label.set_in_screen(self.screen,4,30)
 
             if print_screen :
                 self.screen.print_screen()
 
-            sleep(0.1*self.time_scale)
-            self.clock += 0.1
+            sleep(0.1*self.time_scale)  # Wait 0.1 second * scale before continue.
+            self.clock += 0.1   # Increase 0.1 seconds the internal clock.
 
+
+## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.
 class Screen :
     def __init__(self, environment: object, width: int , height: int, border_style: str) :
         self.width = width
@@ -99,12 +113,9 @@ class Screen :
         self.border_icon = border_style
         self.environment = environment
 
-        self.link_environment()
+        self.environment.screen = self
         self.layout = self.build_layout()
     
-    def link_environment(self) :
-        self.environment.screen = self
-
     def build_layout(self) :
         ud_border = []
         for x in range(0, self.width) :
@@ -126,7 +137,6 @@ class Screen :
         return layout
 
     def print_screen(self) :
-        import emoji
         """
         Print the layout in the "screen" class object.
         """

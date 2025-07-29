@@ -18,6 +18,6 @@ for y in range(1,28) :
 for x in range(0,29) :
     elements.Queue().set_in_screen(screen,x,28) # Crea la fila principal
 
-functions.generate_cashiers(simulation,3,15)
+functions.generate_cashiers(simulation,2,15)
 
 simulation.start()
