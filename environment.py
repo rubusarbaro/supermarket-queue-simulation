@@ -1,8 +1,11 @@
-import functions
+###########################################
+##  Saúl R. Morales © 2025 MIT License   ##
+###########################################
+## This module contains the agents to interact in the environment.
 
-class Border :
-    none = "  "
-    ascii = "██"
+
+# Modules to use in this file:
+import functions
 
 class Environment :
     def __init__(self, time_scale=1.0):

@@ -4,7 +4,7 @@ import functions
 
 simulation = environment.Environment(0)
 simulation.time_scale = 0.5
-screen = environment.Screen(simulation,30,33,environment.Border.none)
+screen = environment.Screen(simulation,30,33,elements.Border.none)
 
 
 ## This part of the code build the layout.

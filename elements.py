@@ -7,6 +7,13 @@
 # Modules to use in this file:
 import colors   # Custom module: Allows to modify printed text.
 
+class Border :
+    """
+    This class provides two styles for app border: "none" (two blank spaces) and "ascii" (two vertical rectangles, "██")
+    """
+    none = "  "
+    ascii = "██"
+
 class Element () :
     """
     Parent class.
