@@ -16,9 +16,9 @@ class Border :
 
 class Element () :
     """
-    Parent class.
+    Parent class. Represents a physical element in the simulation.
 
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
     """
@@ -34,7 +34,7 @@ class Wall(Element) :
     Args:
         color (object | None): The color can be set using the custom module "colors". If no color is desired, None can be used.
     
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         icon (str): Printed icon. This is set by default as "██" and cannot be changed.
@@ -79,7 +79,7 @@ class Queue(Element) :
     Inherited class from Element.
     Represents a gray tile representing the queue.
 
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         icon (str): Printed icon. This is set by default as "██" and cannot be changed.
@@ -126,7 +126,7 @@ class Void(Element) :
     Inherited class from Element.
     Represents void, the abscence of an element in the screen.
 
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         sprite (str): Two blank spaces "  ". It cannot be changed.

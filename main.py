@@ -2,8 +2,7 @@ import elements
 import environment
 import functions
 
-simulation = environment.Environment(0)
-simulation.time_scale = 0.5
+simulation = environment.Environment(0.5)
 screen = environment.Screen(simulation,30,33,elements.Border.none)
 
 

@@ -27,10 +27,10 @@ class Environment :
         customer (list): List of customer in the supermarket queue simulation.
     """
 
-    def __init__(self, time_scale=1.0):
+    def __init__(self,time_scale:float):
         self.screen = None
         self.clock = 0.0
-        self.time_scale = time_scale
+        self.time_scale = functions.check_time_scale(time_scale)
         self.cashiers = []
         self.customer_count = 0
         self.customers = []
@@ -41,7 +41,7 @@ class Environment :
         This function only works with this specific simulation (supermarket queue).
         """
 
-        arrival_times = functions.generate_exponential_arrival_time(1000,15)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
+        arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
 
         Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)  # Elapsed time label shown at the bottom of the simulation.
         time_label = Label(str(round(self.clock,2)),Label.regular)  # Elapsed time shown at the bottom of the simulation.
@@ -107,6 +107,16 @@ class Environment :
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.
 class Screen :
+    """
+    This class graphically represents the environment. The objects should be integrated in a layout.
+
+    Args:
+        environment (object): Environment that manages the simulation.
+        width (int): Unit of measure is blank spaces in the command line.
+        height (int): Unit of measure is blank spaces in the command line.
+        border_stye (str): Character delimiting the border of the layout. If no character desired, provide double blank space "  ". Optionally, it is suggested to used Border class in ELements module.
+    """
+
     def __init__(self, environment: object, width: int , height: int, border_style: str) :
         self.width = width
         self.height = height
@@ -117,14 +127,21 @@ class Screen :
         self.layout = self.build_layout()
     
     def build_layout(self) :
-        ud_border = []
-        for x in range(0, self.width) :
+        """
+        Build layout with the parameters provided when the object was initialized (width, height, and border). It is not necessary to call this method after the object initialization; the layout is automatically created.
+
+        Returns:
+            layout (list): List containing the layout. The layout contains y list with x double-blank spaces. An element in the layout can be called using layout[y][x].
+        """
+
+        ud_border = []  # List containing the upper border.
+        for x in range(0, self.width) : # Generate the border from 0 to width.
             ud_border.append(self.border_icon)
         
-        layout = []
+        layout = [] # List containing the rest of the layout.
         layout.append(ud_border.copy())
 
-        for y in range(0, self.height-2) :
+        for y in range(0, self.height-2) :  # Generate every row (x axis) of the layout from 0 to height value.
             row = []
             row.append(self.border_icon)
 

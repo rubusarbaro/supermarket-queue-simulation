@@ -15,7 +15,7 @@ class Entity():
     """
     Agent interacting in the environment.
 
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         environment (object): Environment where the agent interact.
@@ -37,8 +37,8 @@ class Cashier(Entity) :
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         scan_speed (float): Scanning speed of cashier. Default is 0.5 seconds per item.
-
-    Attrs:
+    
+    Attributes:
         icon (str): Printed icon. This is set by default as "🛃" and cannot be changed.
         cashier_id (int): Identification number. Default is 0. To assign an ID it is important to do it manually using Cashier.cashier_id = n.
         customer_queue (list): List of customers that are in the queue of this cashier.
@@ -103,7 +103,7 @@ class Customer(Entity) :
         environment (object): Environment where this agent will interact.
         customer_kind (str): There are two kind of customers, "regular" that chose the queue with less customers, and "observers" who analyse the carts of other customers and chose the queue with less items.
 
-    Attrs:
+    Attributes:
         x_location (int): Object location in the x axis of screen layout.
         y_location (int): Object location in the y axis of screen layout.
         icon (str): Printed icon. This is set by default as "👤" and cannot be changed.
