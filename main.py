@@ -5,7 +5,6 @@ import functions
 simulation = environment.Environment(0.5)
 screen = environment.Screen(simulation,30,33,elements.Border.none)
 
-
 ## This part of the code build the layout.
 outer_wall = elements.Wall(None)
 for x in range(0,30) :
