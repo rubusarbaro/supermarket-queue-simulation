@@ -116,9 +116,11 @@ class Environment :
                 self.screen.print_screen()
 
             print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
-            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
+            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {round(next_arrival)}")
             if len(self.waiting_times) > 0 :
                 print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+            for cashier in self.cashiers :
+                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {cashier.current_customer_complete_time}")
 
             sleep(1*self.time_scale)  # Wait 0.1 second * scale before continue. 
 

@@ -56,7 +56,7 @@ class Cashier(Entity) :
         self.scan_speed = scan_speed
         self.customer_queue = []
         self.current_customer = None
-        self.current_customer_complete_time = 0.0   # This parameter is important to release the customer according to the internal clock of the environment.
+        self.current_customer_complete_time = 0   # This parameter is important to release the customer according to the internal clock of the environment.
         self.scanned_items = 0
         self.status = "available"
 
@@ -77,7 +77,7 @@ class Cashier(Entity) :
 
         self.scanned_items = 0  # Reset scanned items counter to 0.
         self.current_customer = self.customer_queue[0]  # Assigns the first element (customer) in the list.
-        self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed))   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
+        self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed)+1)   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
 
         self.current_customer.status = "paying" # Change customer's status to "paying".
         self.status = "busy"    # Change its own status to "busy".
