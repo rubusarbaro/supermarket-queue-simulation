@@ -5,11 +5,12 @@
 
 
 # Modules to use in this file:
-from entities import Customer   # To create customer agents.
-from time import sleep          # Regulates simulation's internal clock.
-from ui import Label            # To display messages in the screen.
+from entities import Customer           # To create customer agents.
+from numpy import random as np_random
+from time import sleep,time             # Regulates simulation's internal clock.
+from ui import Label                    # To display messages in the screen.
 #import emoji       # Allows printing emojis.
-import functions    # Custom module: Useful functions 
+import functions    # Custom module: Useful functions
 
 class Environment :
     """
@@ -27,28 +28,45 @@ class Environment :
         customer (list): List of customer in the supermarket queue simulation.
     """
 
-    def __init__(self,time_scale:float):
+    def __init__(self):
         self.screen = None
         self.clock = 0.0
-        self.time_scale = functions.check_time_scale(time_scale)
+        self.time_scale = 0.0
         self.cashiers = []
         self.customer_count = 0
         self.customers = []
 
-    def start(self) :
+    def start(self,simulation_parameters:dict) :
         """
         Start simulation. To finish the simulation press CTRL+C.
         This function only works with this specific simulation (supermarket queue).
+
+        Args:
+            simulation_parameters (dict): Dictionary containing the parameters.
         """
 
-        arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
+        self.time_scale = functions.check_time_scale(simulation_parameters["simulation_scale"])
+        functions.generate_cashiers(self,simulation_parameters["cashiers_quantity"],simulation_parameters["cashiers_y_axis"])
+        avg_arrival_time = simulation_parameters["customer_average_arrival_time"]
+        observer_customer_p = simulation_parameters["observer_customer_probability"]
+        customer_quantity = simulation_parameters["customer_quantity"]
+        simulation_time = customer_quantity = simulation_parameters["simulation_time"]
+
+        #arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
+
+        next_arrival = round(np_random.exponential(avg_arrival_time))
 
         Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)  # Elapsed time label shown at the bottom of the simulation.
-        time_label = Label(str(round(self.clock,2)),Label.regular)  # Elapsed time shown at the bottom of the simulation.
+        time_label = Label(str(round(self.clock,1)),Label.regular)  # Elapsed time shown at the bottom of the simulation.
 
         Label("Siguiente llegada:",Label.regular).set_in_screen(self.screen,0,31)   # Label of time of next arrival shown at the bottom of the simulation.
-        arrival_label = Label(str(arrival_times[self.customer_count]),Label.regular)    # Next arrival time shown at the bottom of the simulation.
+        arrival_label = Label(str(round(next_arrival,1)),Label.regular)    # Next arrival time shown at the bottom of the simulation.
         arrival_label.set_in_screen(self.screen,9,31)  # Place the next arrival time in the bottom of simulation.
+
+        start_time = round(time())
+        Label("Tiempo real:",Label.regular).set_in_screen(self.screen,15,30)
+        real_time_label = Label(str(round(time())-start_time),Label.regular)
+        real_time_label.set_in_screen(self.screen,25,30)
 
         self.screen.print_screen()  #Initial screen printing.
 
@@ -66,14 +84,17 @@ class Environment :
                         elif cashier.customer_queue[0].status == "ready" :  # I used elif instead of else for a technical redundance (it was on purpose).
                             cashier.call_customer()
 
-            if round(self.clock,1) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
-                customer = Customer(self,functions.random_customer_kind(0.03))  # Create a customer; "observer" customer is generated with a probability of 3%.
-                customer.customer_id = self.customer_count + 1
-                customer.spawn(0,28)    # Spawn point set in (0,28).
-                self.customer_count += 1
-                arrival_label.text = str(arrival_times[self.customer_count])    # Update next arrival label.
-                arrival_label.set_in_screen(self.screen,9,31)
-                print_screen = True # Change print_screen to True, to print the new customer.
+            if self.customer_count < customer_quantity or self.clock < simulation_time :
+                #if round(self.clock,1) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
+                if round(self.clock,1) == round(next_arrival,1) :
+                    customer = Customer(self,functions.random_customer_kind(observer_customer_p))  # Create a customer; "observer" customer is generated with a probability of 3%.
+                    customer.customer_id = self.customer_count + 1
+                    customer.spawn(0,28)    # Spawn point set in (0,28).
+                    self.customer_count += 1
+                    next_arrival += round(np_random.exponential(avg_arrival_time))
+                    arrival_label.text = str(round(next_arrival,1))    # Update next arrival label.
+                    arrival_label.set_in_screen(self.screen,9,31)
+                    print_screen = True # Change print_screen to True, to print the new customer.
                 
 
             if len(self.customers) == 0 :   # If there are not customers in the simulation, do nothing.
@@ -98,11 +119,15 @@ class Environment :
             time_label.text = str(round(self.clock,2))  # Update current time label.
             time_label.set_in_screen(self.screen,4,30)
 
+            real_time_label.text = str(round(time())-start_time)
+            real_time_label.set_in_screen(self.screen,25,30)
+
+
             if print_screen :
                 self.screen.print_screen()
 
-            sleep(0.1*self.time_scale)  # Wait 0.1 second * scale before continue.
-            self.clock += 0.1   # Increase 0.1 seconds the internal clock.
+            sleep(1*self.time_scale)  # Wait 0.1 second * scale before continue. 
+            self.clock += 1   # Increase 0.1 seconds the internal clock.
 
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.

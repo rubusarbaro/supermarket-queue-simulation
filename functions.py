@@ -90,21 +90,37 @@ def generate_exponential_arrival_time(n:int,m:int):
     Returns:
         arrival_times (list): List of arrival times.
     """
-    arrival_times = []
-    for i in range(n) :
+    arrival_times = []  # List to store arrival times.
+    for i in range(n) : # Repete this code n times.
         arrival_time = np_random.exponential(m)
-        if i == 0 :
+        if i == 0 : # If there is no first arrival time, generate one.
             arrival_times.append(round(arrival_time,1))
         else :
-            arrival_times.append(round(arrival_times[i-1]+arrival_time,1))
+            arrival_times.append(round(arrival_times[i-1]+arrival_time,1)) # Generate one arrival time an sum it to the last.
     return arrival_times
 
 def generate_cashier_queue(screen:object,cashier:object):
+    """
+    Generate the graphical cashier's queue.
+
+    Args:
+        screen (object): Screen where this function will be used.
+        cashier (object): Cashier to create a queue.
+    """
     from elements import Queue  # Queue class generates the queue tiles as object.
-    for i in range(cashier.y_location,28) :
+    for i in range(cashier.y_location,28) : # Create the queue from the main queue to the front of cashier.
         Queue().set_in_screen(screen,cashier.x_location+1,i)
 
 def random_customer_kind(p_observer_kind:float) :
+    """
+    Returns randomly "regular" or “observed“ based in a weight.
+
+    Args:
+        p_observer_kind (float): Probability a customer is observer.
+    
+    Returns:
+        string: "regular" or "observer"
+    """
     if random() < p_observer_kind :
         return "observer"
     else :
