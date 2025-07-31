@@ -1,6 +1,3 @@
-###########################################
-##  Saúl R. Morales © 2025 MIT License   ##
-###########################################
 ## This module contains additional functions needed to simplify this simulation.
 
 # Modules to use in this file:
@@ -94,9 +91,9 @@ def generate_exponential_arrival_time(n:int,m:int):
     for i in range(n) : # Repete this code n times.
         arrival_time = np_random.exponential(m)
         if i == 0 : # If there is no first arrival time, generate one.
-            arrival_times.append(round(arrival_time,1))
+            arrival_times.append(round(arrival_time))
         else :
-            arrival_times.append(round(arrival_times[i-1]+arrival_time,1)) # Generate one arrival time an sum it to the last.
+            arrival_times.append(round(arrival_times[i-1]+arrival_time)) # Generate one arrival time an sum it to the last.
     return arrival_times
 
 def generate_cashier_queue(screen:object,cashier:object):

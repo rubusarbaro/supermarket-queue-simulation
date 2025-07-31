@@ -1,6 +1,3 @@
-###########################################
-##  Saúl R. Morales © 2025 MIT License   ##
-###########################################
 ## This module contains simulation objects that agents can interact with.
 
 

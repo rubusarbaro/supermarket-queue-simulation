@@ -1,6 +1,3 @@
-###########################################
-##  Saúl R. Morales © 2025 MIT License   ##
-###########################################
 ## This module allows to print colors and other text styles in the terminal using ANSI scape codes.
 
 class Text :

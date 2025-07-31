@@ -1,12 +1,10 @@
-###########################################
-##  Saúl R. Morales © 2025 MIT License   ##
-###########################################
 ## This module contains the agents to interact in the environment.
 
 
 # Modules to use in this file:
 from math import inf as infinite    # Infinite number is used by Customer to chose Cashier.
 from numpy import random as np_random
+#from random import randint
 import colors   # Custom module: Allows to modify printed text.
 import elements # Custom module: Provides simulation objects that agents can interact with.
 # import emoji        # Allows to print emojis.
@@ -49,7 +47,7 @@ class Cashier(Entity) :
         status (str): Current status; it has two options 1) "available" and 2) "busy".
     """
 
-    def __init__(self,environment:object,x_location:int,y_location:int,scan_speed=2):
+    def __init__(self,environment:object,x_location:int,y_location:int,scan_speed=4):
         self.icon = "🛃"
         self.x_location = x_location
         self.y_location = y_location
@@ -79,10 +77,13 @@ class Cashier(Entity) :
 
         self.scanned_items = 0  # Reset scanned items counter to 0.
         self.current_customer = self.customer_queue[0]  # Assigns the first element (customer) in the list.
-        self.current_customer_complete_time = round(round(self.environment.clock) + round(self.current_customer.cart_size) * self.scan_speed)   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
+        self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed))   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
 
         self.current_customer.status = "paying" # Change customer's status to "paying".
         self.status = "busy"    # Change its own status to "busy".
+
+        self.current_customer.paying_arrival_time = self.environment.clock
+        self.environment.waiting_times.append(self.current_customer.paying_arrival_time-self.current_customer.queue_arrival_time)
     
     def release_customer(self) :
         """
@@ -115,7 +116,6 @@ class Customer(Entity) :
     """
 
     def __init__(self,environment: object,customer_kind: str):
-        from random import randint
         self.icon = "👤"
         self.environment = environment
         self.customer_id = 0
@@ -123,6 +123,8 @@ class Customer(Entity) :
         self.cart_size = round(np_random.exponential(50))
         self.status = "spawned"
         self.chosen_cashier = None
+        self.queue_arrival_time = 0
+        self.paying_arrival_time = 0
 
         environment.customers.append(self)  # Assigns customer to environment list.
     
@@ -182,6 +184,8 @@ class Customer(Entity) :
         else :  # Move the customer 1 step until they arrives to cashier's x axis and restore the original sprite in the last step.
             elements.Queue().set_in_screen(self.environment.screen,self.x_location,self.y_location)
             self.spawn(self.x_location+1,self.y_location)
+
+        self.queue_arrival_time = self.environment.clock
     
     def move_in_queue_clocked(self) :
         """

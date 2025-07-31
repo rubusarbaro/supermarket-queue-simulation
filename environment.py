@@ -1,14 +1,14 @@
-###########################################
-##  Saúl R. Morales © 2025 MIT License   ##
-###########################################
 ## This module contains the agents to interact in the environment.
 
 
 # Modules to use in this file:
+from datetime import timedelta
 from entities import Customer           # To create customer agents.
+from numpy import mean
 from numpy import random as np_random
 from time import sleep,time             # Regulates simulation's internal clock.
 from ui import Label                    # To display messages in the screen.
+import colors
 #import emoji       # Allows printing emojis.
 import functions    # Custom module: Useful functions
 
@@ -30,11 +30,12 @@ class Environment :
 
     def __init__(self):
         self.screen = None
-        self.clock = 0.0
+        self.clock = 0
         self.time_scale = 0.0
         self.cashiers = []
         self.customer_count = 0
         self.customers = []
+        self.waiting_times = []
 
     def start(self,simulation_parameters:dict) :
         """
@@ -46,37 +47,33 @@ class Environment :
         """
 
         self.time_scale = functions.check_time_scale(simulation_parameters["simulation_scale"])
+
         functions.generate_cashiers(self,simulation_parameters["cashiers_quantity"],simulation_parameters["cashiers_y_axis"])
+
         avg_arrival_time = simulation_parameters["customer_average_arrival_time"]
+
         observer_customer_p = simulation_parameters["observer_customer_probability"]
+
         customer_quantity = simulation_parameters["customer_quantity"]
-        simulation_time = customer_quantity = simulation_parameters["simulation_time"]
+
+        simulation_time = simulation_parameters["simulation_time"]
 
         #arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
 
-        next_arrival = round(np_random.exponential(avg_arrival_time))
-
-        Label("Tiempo:",Label.regular).set_in_screen(self.screen,0,30)  # Elapsed time label shown at the bottom of the simulation.
-        time_label = Label(str(round(self.clock,1)),Label.regular)  # Elapsed time shown at the bottom of the simulation.
-
-        Label("Siguiente llegada:",Label.regular).set_in_screen(self.screen,0,31)   # Label of time of next arrival shown at the bottom of the simulation.
-        arrival_label = Label(str(round(next_arrival,1)),Label.regular)    # Next arrival time shown at the bottom of the simulation.
-        arrival_label.set_in_screen(self.screen,9,31)  # Place the next arrival time in the bottom of simulation.
+        next_arrival = int(round(np_random.exponential(avg_arrival_time)))
 
         start_time = round(time())
-        Label("Tiempo real:",Label.regular).set_in_screen(self.screen,15,30)
-        real_time_label = Label(str(round(time())-start_time),Label.regular)
-        real_time_label.set_in_screen(self.screen,25,30)
 
         self.screen.print_screen()  #Initial screen printing.
 
+        end = False
         while True :    # Loop: This simulation will run until user press ctrl+C.
             print_screen = True # Reset print_screen to FALSE. I will let it TRUE so the time will update.
 
             for cashier in self.cashiers :  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status :
                     case "busy" :   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
-                        if round(self.clock,1) == cashier.current_customer_complete_time :
+                        if abs(int(round(self.clock))-int(round(cashier.current_customer_complete_time))) < 0.4 :
                             cashier.release_customer()
                     case "available" :  # If the cashier is available and there is someone in their queue, call them.
                         if len(cashier.customer_queue) == 0 :
@@ -84,19 +81,18 @@ class Environment :
                         elif cashier.customer_queue[0].status == "ready" :  # I used elif instead of else for a technical redundance (it was on purpose).
                             cashier.call_customer()
 
-            if self.customer_count < customer_quantity or self.clock < simulation_time :
-                #if round(self.clock,1) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
-                if round(self.clock,1) == round(next_arrival,1) :
+            if self.customer_count < customer_quantity and self.clock < simulation_time :
+                #if round(self.clock) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
+                if abs(int(round(self.clock))-int(round(next_arrival))) < 0.4 :
                     customer = Customer(self,functions.random_customer_kind(observer_customer_p))  # Create a customer; "observer" customer is generated with a probability of 3%.
                     customer.customer_id = self.customer_count + 1
                     customer.spawn(0,28)    # Spawn point set in (0,28).
                     self.customer_count += 1
-                    next_arrival += round(np_random.exponential(avg_arrival_time))
-                    arrival_label.text = str(round(next_arrival,1))    # Update next arrival label.
-                    arrival_label.set_in_screen(self.screen,9,31)
+                    next_arrival += int(round(np_random.exponential(avg_arrival_time)))
                     print_screen = True # Change print_screen to True, to print the new customer.
+            else :
+                end = True
                 
-
             if len(self.customers) == 0 :   # If there are not customers in the simulation, do nothing.
                 pass
             else :
@@ -114,20 +110,24 @@ class Environment :
                             customer.move_in_queue_clocked()
                             print_screen = True
                         case "finished" :
-                            del customer
-
-            time_label.text = str(round(self.clock,2))  # Update current time label.
-            time_label.set_in_screen(self.screen,4,30)
-
-            real_time_label.text = str(round(time())-start_time)
-            real_time_label.set_in_screen(self.screen,25,30)
-
+                            self.customers.remove(customer)
 
             if print_screen :
                 self.screen.print_screen()
 
+            print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
+            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
+            if len(self.waiting_times) > 0 :
+                print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+
             sleep(1*self.time_scale)  # Wait 0.1 second * scale before continue. 
-            self.clock += 1   # Increase 0.1 seconds the internal clock.
+
+            if end and len(self.customers) == 0:
+                break
+
+            self.clock += 1   # Increase 1 second the internal clock.
+    
+        print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
 
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.

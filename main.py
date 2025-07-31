@@ -2,11 +2,10 @@
 from math import inf as infinite
 import elements     # Custom module: Provides graphical objects the agents can interact with.
 import environment  # Custom module: Simulation manager.  
-import functions    # Custom module: Additional functions.
 
 ## Simulation initialization
 simulation = environment.Environment()   # Controls the simulation with an internal clock.
-screen = environment.Screen(simulation,30,33,elements.Border.none)  # Creates the simulation graphical layout.
+screen = environment.Screen(simulation,30,30,elements.Border.none)  # Creates the simulation graphical layout.
 
 ## Layout customization.
 outer_wall = elements.Wall(None)
@@ -29,6 +28,5 @@ simulation_parameters = {
     "simulation_time" : infinite    # in seconds
 }
 
-
 ## Simulation
-simulation.start(simulation_parameters) # Start simulation, customer arrival average time is 5 seconds.
+simulation.start(simulation_parameters)
