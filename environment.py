@@ -7,7 +7,6 @@ from entities import Customer           # To create customer agents.
 from numpy import mean
 from numpy import random as np_random
 from time import sleep,time             # Regulates simulation's internal clock.
-from ui import Label                    # To display messages in the screen.
 import colors
 #import emoji       # Allows printing emojis.
 import functions    # Custom module: Useful functions
@@ -80,7 +79,7 @@ class Environment :
             for cashier in self.cashiers :  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status :
                     case "busy" :   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
-                        if self.clock < cashier.current_customer_complete_time :
+                        if self.clock > cashier.current_customer_complete_time :
                             cashier.release_customer()
                     case "available" :  # If the cashier is available and there is someone in their queue, call them.
                         if len(cashier.customer_queue) == 0 :
@@ -93,7 +92,11 @@ class Environment :
                 if end == False :
                     if self.clock > next_arrival :
                         if simulation_parameters["fixed_arrival_times"] == False :
-                            walmart_hours = [[25200,300],[28800,166],[32400,100],[36000,70],[39600,55],[43200,45],[46800,42],[50400,40],[54000,40],[57600,40],[61200,40],[64800,40],[68400,44],[72000,54], [75600,75],[79200,130],[82800,0],[86400,0]]
+                            walmart_saturday = [[25200,300],[28800,166],[32400,100],[36000,70],[39600,55],[43200,45],[46800,42],[50400,40],[54000,40],[57600,40],[61200,40],[64800,40],[68400,44],[72000,54], [75600,75],[79200,130],[82800,0],[86400,0]] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
+
+                            walmart_sunday = [[25200,9],[28800,16],[32400,29],[36000,45],[39600,68],[43200,89],[46800,110],[50400,124],[54000,134],[57600,141],[61200,141],[64800,138],[68400,124],[72000,97], [75600,65],[79200,37],[82800,0],[86400,0]] #9 16 29 45 68 89 110 124 134 141 141 138 124 97 65 37. MAX: 150
+                            #66.66
+                            walmart_hours = walmart_saturday
                 
                             for i in range(0,len(walmart_hours)) :
                                 if self.clock >= walmart_hours[i][0] and self.clock < walmart_hours[i+1][0] :
@@ -138,7 +141,7 @@ class Environment :
             if len(self.waiting_times) > 0 :
                 print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
             for cashier in self.cashiers :
-                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {cashier.current_customer_complete_time}")
+                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=cashier.current_customer_complete_time))}")
 
             sleep(1*self.time_scale)  # Wait 0.1 second * scale before continue. 
 
@@ -148,6 +151,7 @@ class Environment :
             self.clock += 1   # Increase 1 second the internal clock.
     
         print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
+        print(f"Total de clientes: {self.customer_count}")
 
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.
