@@ -65,7 +65,7 @@ class Environment :
         next_arrival = int(round(np_random.exponential(avg_arrival_time)))
 
         if simulation_parameters["fixed_arrival_times"] == False :
-            self.clock = 72000
+            self.clock = 25200
             avg_arrival_time = walmart_hours[0][1]
             next_arrival = self.clock + int(round(np_random.exponential(avg_arrival_time))) + 1
 
@@ -80,7 +80,7 @@ class Environment :
             for cashier in self.cashiers :  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status :
                     case "busy" :   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
-                        if abs(int(round(self.clock))-int(round(cashier.current_customer_complete_time))) < 0.4 :
+                        if self.clock < cashier.current_customer_complete_time :
                             cashier.release_customer()
                     case "available" :  # If the cashier is available and there is someone in their queue, call them.
                         if len(cashier.customer_queue) == 0 :
