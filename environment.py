@@ -58,9 +58,16 @@ class Environment :
 
         simulation_time = simulation_parameters["simulation_time"]
 
+        walmart_hours = [[25200,300],[28800,166],[32400,100],[36000,70],[39600,55],[43200,45],[46800,42],[50400,40],[54000,40],[57600,40],[61200,40],[64800,40],[68400,44],[72000,54], [75600,75],[79200,130],[82800,0],[86400,0]]
+
         #arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
 
         next_arrival = int(round(np_random.exponential(avg_arrival_time)))
+
+        if simulation_parameters["fixed_arrival_times"] == False :
+            self.clock = 72000
+            avg_arrival_time = walmart_hours[0][1]
+            next_arrival = self.clock + int(round(np_random.exponential(avg_arrival_time))) + 1
 
         start_time = round(time())
 
@@ -83,13 +90,24 @@ class Environment :
 
             if self.customer_count < customer_quantity and self.clock < simulation_time :
                 #if round(self.clock) == arrival_times[self.customer_count] :  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
-                if abs(int(round(self.clock))-int(round(next_arrival))) < 0.4 :
-                    customer = Customer(self,functions.random_customer_kind(observer_customer_p))  # Create a customer; "observer" customer is generated with a probability of 3%.
-                    customer.customer_id = self.customer_count + 1
-                    customer.spawn(0,28)    # Spawn point set in (0,28).
-                    self.customer_count += 1
-                    next_arrival += int(round(np_random.exponential(avg_arrival_time)))
-                    print_screen = True # Change print_screen to True, to print the new customer.
+                if end == False :
+                    if self.clock > next_arrival :
+                        if simulation_parameters["fixed_arrival_times"] == False :
+                            walmart_hours = [[25200,300],[28800,166],[32400,100],[36000,70],[39600,55],[43200,45],[46800,42],[50400,40],[54000,40],[57600,40],[61200,40],[64800,40],[68400,44],[72000,54], [75600,75],[79200,130],[82800,0],[86400,0]]
+                
+                            for i in range(0,len(walmart_hours)) :
+                                if self.clock >= walmart_hours[i][0] and self.clock < walmart_hours[i+1][0] :
+                                    avg_arrival_time = walmart_hours[i][1]
+
+                                    if avg_arrival_time == 0 :
+                                        end = True
+
+                        customer = Customer(self,functions.random_customer_kind(observer_customer_p))  # Create a customer; "observer" customer is generated with a probability of 3%.
+                        customer.customer_id = self.customer_count + 1
+                        customer.spawn(0,28)    # Spawn point set in (0,28).
+                        self.customer_count += 1
+                        next_arrival += int(round(np_random.exponential(avg_arrival_time)))
+                        print_screen = True # Change print_screen to True, to print the new customer.
             else :
                 end = True
                 
