@@ -10,7 +10,7 @@ import elements # Custom module: Provides simulation objects that agents can int
 # import emoji        # Allows to print emojis.
 import functions    # Custom module: Containts additional functions that are not contained in classes.
 
-class Entity():
+class Entity:
     """
     Agent interacting in the environment.
 
@@ -26,7 +26,7 @@ class Entity():
         self.environment = environment
 
 
-class Cashier(Entity) :
+class Cashier(Entity):
     """
     Inherited class from Entity.
     Agent that emulates the behavior of a real life cashier (scan items).
@@ -47,7 +47,7 @@ class Cashier(Entity) :
         status (str): Current status; it has two options 1) "available" and 2) "busy".
     """
 
-    def __init__(self,environment:object,x_location:int,y_location:int,scan_speed=4):
+    def __init__(self, environment: object, x_location: int, y_location: int, scan_speed = 4):
         self.icon = "🛃"
         self.x_location = x_location
         self.y_location = y_location
@@ -61,16 +61,16 @@ class Cashier(Entity) :
         self.status = "available"
 
         environment.cashiers.append(self)   # Automatically appends the cashier to the environment's cashier list.
-        functions.generate_cashier_queue(environment.screen,self)   # Automatically creates the queue design for the cashier, from y_location to the main line.
+        functions.generate_cashier_queue(environment.screen, self)   # Automatically creates the queue design for the cashier, from y_location to the main line.
 
-    def spawn(self) :
+    def spawn(self):
         """
         Set the cashier in the screen's layout. It is important to execute this method before printing the screen.
         """
 
         self.environment.screen.layout[self.y_location][self.x_location] = self.icon    # This code change the blank space in the coordinates of Screen.layout by the agent icon.
 
-    def call_customer(self) :
+    def call_customer(self):
         """
         Call the first customer in the list (customer_queue).
         """
@@ -85,7 +85,7 @@ class Cashier(Entity) :
         self.current_customer.paying_arrival_time = self.environment.clock
         self.environment.waiting_times.append(self.current_customer.paying_arrival_time-self.current_customer.queue_arrival_time)
     
-    def release_customer(self) :
+    def release_customer(self):
         """
         This releases the customer when their cart was completed scanned and remove the customer from cashier's list.
         """
@@ -96,7 +96,7 @@ class Cashier(Entity) :
         self.current_customer = None    # Overwrite current customer to None.
 
 
-class Customer(Entity) :
+class Customer(Entity):
     """
     Inherited class from Entity.
     Agent that emulates the behavior of a real life customer (queuing).
@@ -115,7 +115,7 @@ class Customer(Entity) :
         status (str): Current status; options 1) "spawned", 2) "moving to queue", 3) "in queue", 4) "paying", 5) "exiting", and 6) "finished".
     """
 
-    def __init__(self,environment: object,customer_kind: str):
+    def __init__(self, environment: object, customer_kind: str):
         self.icon = "👤"
         self.environment = environment
         self.customer_id = 0
@@ -128,7 +128,7 @@ class Customer(Entity) :
 
         environment.customers.append(self)  # Assigns customer to environment list.
     
-    def spawn(self,x_location:int,y_location:int) :
+    def spawn(self, x_location: int, y_location: int):
         """
         Set the customer in the screen's layout. It is important to execute this method before printing the screen.
 
@@ -142,28 +142,28 @@ class Customer(Entity) :
 
         self.environment.screen.layout[y_location][x_location] = self.icon  # This code change the blank space in the coordinates of Screen.layout by the agent icon.
 
-    def choose_queue(self) :
+    def choose_queue(self):
         """
         Customer analyses the queues according to its kind ("regular" or "observer").
         """
 
         queue = None    # Initialize the queue variable in blank (None type).
 
-        match self.customer_kind :
-            case "regular" :
+        match self.customer_kind:
+            case "regular":
                 queue_size = infinite
-                for cashier in self.environment.cashiers :
-                    if len(cashier.customer_queue) < queue_size :
+                for cashier in self.environment.cashiers:
+                    if len(cashier.customer_queue) < queue_size:
                         queue_size = len(cashier.customer_queue)
                         queue = cashier
-            case "observer" :
+            case "observer":
                 items_in_queue_size = infinite
-                for cashier in self.environment.cashiers :
+                for cashier in self.environment.cashiers:
                     cart_size = 0
-                    for customer in cashier.customer_queue :
+                    for customer in cashier.customer_queue:
                         cart_size += customer.cart_size
 
-                    if cart_size < items_in_queue_size :
+                    if cart_size < items_in_queue_size:
                         items_in_queue_size = cart_size
                         queue = cashier
         queue.customer_queue.append(self)
@@ -171,45 +171,45 @@ class Customer(Entity) :
 
         self.status = "moving to queue"
     
-    def move_to_queue_clocked(self) :
+    def move_to_queue_clocked(self):
         """
         Once the customer chose their cashier, they walk to their queue.
         This function is created to work on an internal clock environment. The agent will execute one step of the action until the loop restarts.
         """
 
-        if self.chosen_cashier == None :    # If the customer has not chosen a cashier, print a warning.
+        if self.chosen_cashier == None:    # If the customer has not chosen a cashier, print a warning.
             print(f"{colors.Bold.yellow}Warning:{colors.Text.end} Customer {self.customer_id} has not chosen cashier.")
-        elif self.x_location == self.chosen_cashier.x_location + 1 :   # When the customer arrives to cashier's x axis, change their status to "in queue". 
+        elif self.x_location == self.chosen_cashier.x_location + 1:   # When the customer arrives to cashier's x axis, change their status to "in queue". 
             self.status = "in queue"
         else :  # Move the customer 1 step until they arrives to cashier's x axis and restore the original sprite in the last step.
-            elements.Queue().set_in_screen(self.environment.screen,self.x_location,self.y_location)
-            self.spawn(self.x_location+1,self.y_location)
+            elements.Queue().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+            self.spawn(self.x_location + 1, self.y_location)
 
         self.queue_arrival_time = self.environment.clock
     
-    def move_in_queue_clocked(self) :
+    def move_in_queue_clocked(self):
         """
         Move the customer forward in the queue. If there is someone else in front of him, the customer cannot pass.
         This function is created to work on an internal clock environment. The agent will execute one step of the action until the loop restarts.
         """
 
-        if self.y_location == self.chosen_cashier.y_location :  # If customer arrived cashier's y axis, change their status to "ready (to pay)".
+        if self.y_location == self.chosen_cashier.y_location:  # If customer arrived cashier's y axis, change their status to "ready (to pay)".
             self.status = "ready"
-        elif self.environment.screen.layout[self.y_location-1][self.x_location] == self.icon :  # If there is other customer in front, ignore.
+        elif self.environment.screen.layout[self.y_location-1][self.x_location] == self.icon:  # If there is other customer in front, ignore.
             pass
-        else :  # Move the customer 1 step until they arrives to cashier's y axis and restore the original sprite in the last step.
-            elements.Queue().set_in_screen(self.environment.screen,self.x_location,self.y_location)
-            self.spawn(self.x_location,self.y_location-1)
+        else:  # Move the customer 1 step until they arrives to cashier's y axis and restore the original sprite in the last step.
+            elements.Queue().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+            self.spawn(self.x_location, self.y_location - 1)
     
-    def exit_store_clocked(self) :
+    def exit_store_clocked(self):
         """
         Move the customer upwards until they disappear from the screen.
         This function is created to work on an internal clock environment. The agent will execute one step of the action until the loop restarts.
         """
 
-        if self.y_location == 0 :
-            elements.Void().set_in_screen(self.environment.screen,self.x_location,self.y_location)
+        if self.y_location == 0:
+            elements.Void().set_in_screen(self.environment.screen, self.x_location, self.y_location)
             self.status = "finished"
-        else :
-            elements.Void().set_in_screen(self.environment.screen,self.x_location,self.y_location)
-            self.spawn(self.x_location,self.y_location-1)
+        else:
+            elements.Void().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+            self.spawn(self.x_location, self.y_location - 1)

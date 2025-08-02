@@ -1,6 +1,6 @@
 ## This module allows to print colors and other text styles in the terminal using ANSI scape codes.
 
-class Text :
+class Text:
     """
     Class Text contains the ANSI code to end the text.
     This must be concatenated as Text.end at the end of the text. Forgetting to close the text will cause that the rest of the printed text has the same format.
@@ -8,7 +8,7 @@ class Text :
 
     end = "\033[0m"
 
-class Regular(Text) :
+class Regular(Text):
     """
     This subclass contains two options: 1) Write text with default color in bold or underscored; 2) write text with normal style in color.
     This must be concatenated as Regular.* at  the beginning of the text to modify.
@@ -24,7 +24,7 @@ class Regular(Text) :
     yellow = "\033[0;33m"
     dark_gray = "\033[1;30m"
 
-class Bold(Text) :
+class Bold(Text):
     """
     This subclass contains allows to print bolded text in color.
     This must be concatenated as Bold.* at  the beginning of the text to modify.
@@ -37,7 +37,7 @@ class Bold(Text) :
     yellow = "\033[1;33m"
     dark_gray = "\033[1;30m"
 
-class Underline(Text) :
+class Underline(Text):
     """
     This subclass contains allows to print underscored text in color.
     This must be concatenated as Underline.* at  the beginning of the text to modify.
@@ -50,7 +50,7 @@ class Underline(Text) :
     yellow = "\033[4;33m"
     dark_gray = "\033[1;30m"
 
-class Background(Text) :
+class Background(Text):
     """
     I do not remember what this subclass does.
     This must be concatenated as Background.* at  the beginning of the text to modify.

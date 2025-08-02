@@ -7,22 +7,22 @@ from random import random   # To create random values.
 import colors               # To print in colors.
 import os                   # To access system commands.
 
-def clear_screen() :
+def clear_screen():
     """
     Clear all text in the terminal.
     """
 
     # If system is macOS or Linux, it will use "clear" command.
-    if os.name == "posix" :
+    if os.name == "posix":
         os.system("clear")
     # Else, if it's Windows, it will use "CLS".
-    elif os.name == "nt" :
+    elif os.name == "nt":
          os.system("CLS")
     # If a system doesn't match any of this conditions, it will display an error.
-    else :
+    else:
         print("Function not compatible with the current os.")
 
-def generate_cashiers(environment:object,quantity:int,y_axis:int,x_locations=[],align="auto") :
+def generate_cashiers(environment: object, quantity: int, y_axis: int, x_locations = [], align = "auto") :
     """
     Generates the specified quantity of cashiers.
 
@@ -38,30 +38,30 @@ def generate_cashiers(environment:object,quantity:int,y_axis:int,x_locations=[],
     screen_width = environment.screen.width
     max_quantity = int((screen_width-2) // 3)   # Calculates the maximum quantity that is possible in for the current layout.
     
-    if quantity > max_quantity :    # If the requested quantity is higher than the capacity, it prints a color warning for user and stops the execution.
+    if quantity > max_quantity:    # If the requested quantity is higher than the capacity, it prints a color warning for user and stops the execution.
         raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{max_quantity}{colors.Text.end}.")
 
-    if align == "auto" :    # If user selected "auto", generates x positions.
-        n = (screen_width//2)
+    if align == "auto":    # If user selected "auto", generates x positions.
+        n = (screen_width // 2)
         left_list = []
-        while n > 0 :
-            left_list.append(int(n)-1)
+        while n > 0:
+            left_list.append(int(n) - 1)
             n -= 3
 
-        n = (screen_width//2) + 3
+        n = (screen_width // 2) + 3
         right_list = []
-        while n < screen_width-1 :
-            right_list.append(int(n)-1)
+        while n < screen_width - 1:
+            right_list.append(int(n) - 1)
             n += 3
 
         x_locations = [x for pair in zip_longest(left_list, right_list) for x in pair if x is not None]
 
-    for i in range(0,quantity) :
-        cashier = Cashier(environment,x_locations[i],y_axis)
-        cashier.cashier_id = i+1
+    for i in range(0,quantity):
+        cashier = Cashier(environment, x_locations[i], y_axis)
+        cashier.cashier_id = i + 1
         cashier.spawn()
 
-def check_time_scale(scale:float) :
+def check_time_scale(scale: float):
     """
     Check if the time scale for environment execution is valid. If not, print a warning and stop execution. A valid a scale is greater than 0, but not less or equal than 0.
 
@@ -71,12 +71,12 @@ def check_time_scale(scale:float) :
     Returns:
         scale (float)
     """
-    if scale == 0 :
+    if scale == 0:
         raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La escala debe ser igual o mayor a 0.01")
     else:
         return scale
 
-def generate_exponential_arrival_time(n:int,m:int):
+def generate_exponential_arrival_time(n: int, m: int):
     """
     Generate a list of arrival times using numpy.random.exponential.
 
@@ -88,15 +88,15 @@ def generate_exponential_arrival_time(n:int,m:int):
         arrival_times (list): List of arrival times.
     """
     arrival_times = []  # List to store arrival times.
-    for i in range(n) : # Repete this code n times.
+    for i in range(n): # Repete this code n times.
         arrival_time = np_random.exponential(m)
-        if i == 0 : # If there is no first arrival time, generate one.
+        if i == 0: # If there is no first arrival time, generate one.
             arrival_times.append(round(arrival_time))
-        else :
-            arrival_times.append(round(arrival_times[i-1]+arrival_time)) # Generate one arrival time an sum it to the last.
+        else:
+            arrival_times.append(round(arrival_times[i - 1] + arrival_time)) # Generate one arrival time an sum it to the last.
     return arrival_times
 
-def generate_cashier_queue(screen:object,cashier:object):
+def generate_cashier_queue(screen: object, cashier: object):
     """
     Generate the graphical cashier's queue.
 
@@ -105,10 +105,10 @@ def generate_cashier_queue(screen:object,cashier:object):
         cashier (object): Cashier to create a queue.
     """
     from elements import Queue  # Queue class generates the queue tiles as object.
-    for i in range(cashier.y_location,28) : # Create the queue from the main queue to the front of cashier.
-        Queue().set_in_screen(screen,cashier.x_location+1,i)
+    for i in range(cashier.y_location,28): # Create the queue from the main queue to the front of cashier.
+        Queue().set_in_screen(screen, cashier.x_location + 1, i)
 
-def random_customer_kind(p_observer_kind:float) :
+def random_customer_kind(p_observer_kind: float):
     """
     Returns randomly "regular" or “observed“ based in a weight.
 
@@ -118,7 +118,7 @@ def random_customer_kind(p_observer_kind:float) :
     Returns:
         string: "regular" or "observer"
     """
-    if random() < p_observer_kind :
+    if random() < p_observer_kind:
         return "observer"
-    else :
+    else:
         return "regular"

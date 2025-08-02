@@ -4,14 +4,14 @@
 # Modules to use in this file:
 import colors   # Custom module: Allows to modify printed text.
 
-class Border :
+class Border:
     """
     This class provides two styles for app border: "none" (two blank spaces) and "ascii" (two vertical rectangles, "██")
     """
     none = "  "
     ascii = "██"
 
-class Element () :
+class Element:
     """
     Parent class. Represents a physical element in the simulation.
 
@@ -23,7 +23,7 @@ class Element () :
         self.x_location = 0
         self.y_location = 0
     
-class Wall(Element) :
+class Wall(Element):
     """
     Inherited class from Element.
     Represents a wall that agent cannot pass.
@@ -37,13 +37,13 @@ class Wall(Element) :
         icon (str): Printed icon. This is set by default as "██" and cannot be changed.
         sprite (str): Icon that will be printed. String containing the ANSI scape codes and the object's icon.
     """
-    def __init__(self, color) :
+    def __init__(self, color):
         super().__init__()
         self.icon = "██"
         self.color = color
         self.sprite = self.gen_sprite()
 
-    def gen_sprite(self) :
+    def gen_sprite(self):
         """
         Generate sprite to use, concatenating ANSI codes to current logo.
         
@@ -51,12 +51,12 @@ class Wall(Element) :
             sprite (str)
         """
 
-        if self.color == None :
+        if self.color == None:
             return self.icon
-        else :
+        else:
             return f"{self.color}{self.icon}{colors.Text.end}"
         
-    def set_in_screen(self, screen: object, x_location: int, y_location: int) :
+    def set_in_screen(self, screen: object, x_location: int, y_location: int):
         """
         Add current object to the screen layout. Necessary to import execute this method before printing the screen layout.
 
@@ -71,7 +71,7 @@ class Wall(Element) :
 
         screen.layout[y_location][x_location] = self.sprite
 
-class Queue(Element) :
+class Queue(Element):
     """
     Inherited class from Element.
     Represents a gray tile representing the queue.
@@ -84,13 +84,13 @@ class Queue(Element) :
         sprite (str): Icon that will be printed. String containing the ANSI scape codes and the object's icon.
     """
 
-    def __init__(self) :
+    def __init__(self):
         super().__init__()
         self.icon = "██"
         self.color = colors.Regular.dark_gray
         self.sprite = self.gen_sprite()
 
-    def gen_sprite(self) :
+    def gen_sprite(self):
         """
         Generate sprite to use, concatenating ANSI codes to current logo.
         
@@ -98,12 +98,12 @@ class Queue(Element) :
             sprite (str)
         """
 
-        if self.color == None :
+        if self.color == None:
             return self.icon
-        else :
+        else:
             return f"{self.color}{self.icon}{colors.Text.end}"
         
-    def set_in_screen(self, screen: object, x_location: int, y_location: int) :
+    def set_in_screen(self, screen: object, x_location: int, y_location: int):
         """
         Add current object to the screen layout. Necessary to import execute this method before printing the screen layout.
 
@@ -118,7 +118,7 @@ class Queue(Element) :
 
         screen.layout[y_location][x_location] = self.sprite
 
-class Void(Element) :
+class Void(Element):
     """
     Inherited class from Element.
     Represents void, the abscence of an element in the screen.
@@ -129,11 +129,11 @@ class Void(Element) :
         sprite (str): Two blank spaces "  ". It cannot be changed.
     """
 
-    def __init__(self) :
+    def __init__(self):
         super().__init__()
         self.sprite = "  "
     
-    def set_in_screen(self, screen: object, x_location: int, y_location: int) :
+    def set_in_screen(self, screen: object, x_location: int, y_location: int):
         """
         Add current object to the screen layout. Necessary to import execute this method before printing the screen layout.
 
