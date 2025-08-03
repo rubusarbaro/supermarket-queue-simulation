@@ -1,4 +1,4 @@
-## This module allows to print colors and other text styles in the terminal using ANSI scape codes.
+## This module allows to print colors and other text styles in the terminal using ANSI escape codes.
 
 class Text:
     """
