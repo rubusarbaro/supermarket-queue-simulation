@@ -137,6 +137,11 @@ class Environment:
                         case "in queue":
                             customer.move_in_queue_clocked()
                             print_screen = True
+                            if customer == customer.chosen_cashier.customer_queue[-1] and customer.chosen_cashier.customer_queue.index(customer) != 0:
+                                customer.search_different_queue()
+                        case "changing queue":
+                            customer.change_queue_clocked()
+                            print_screen = True
                         case "finished":
                             self.customers.remove(customer)
 
@@ -145,7 +150,7 @@ class Environment:
 
             print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
 
-            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {round(next_arrival)}")
+            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
 
             if len(self.waiting_times) > 0:
                 print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")

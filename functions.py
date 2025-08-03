@@ -40,6 +40,9 @@ def generate_cashiers(environment: object, quantity: int, y_axis: int, x_locatio
     
     if quantity > max_quantity:    # If the requested quantity is higher than the capacity, it prints a color warning for user and stops the execution.
         raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{max_quantity}{colors.Text.end}.")
+    
+    if quantity <= 0:    # If the requested quantity is higher than the capacity, it prints a color warning for user and stops the execution.
+        raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{1}{colors.Text.end}.")
 
     if align == "auto":    # If user selected "auto", generates x positions.
         n = (screen_width // 2)
@@ -105,7 +108,7 @@ def generate_cashier_queue(screen: object, cashier: object):
         cashier (object): Cashier to create a queue.
     """
     from elements import Queue  # Queue class generates the queue tiles as object.
-    for i in range(cashier.y_location,28): # Create the queue from the main queue to the front of cashier.
+    for i in range(cashier.y_location + 1, 28): # Create the queue from the main queue to the front of cashier.
         Queue().set_in_screen(screen, cashier.x_location + 1, i)
 
 def random_customer_kind(p_observer_kind: float):

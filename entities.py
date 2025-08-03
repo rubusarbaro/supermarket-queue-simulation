@@ -195,7 +195,7 @@ class Customer(Entity):
 
         if self.y_location == self.chosen_cashier.y_location:  # If customer arrived cashier's y axis, change their status to "ready (to pay)".
             self.status = "ready"
-        elif self.environment.screen.layout[self.y_location-1][self.x_location] == self.icon:  # If there is other customer in front, ignore.
+        elif self.environment.screen.layout[self.y_location - 1][self.x_location] == self.icon:  # If there is other customer in front, ignore.
             pass
         else:  # Move the customer 1 step until they arrives to cashier's y axis and restore the original sprite in the last step.
             elements.Queue().set_in_screen(self.environment.screen, self.x_location, self.y_location)
@@ -213,3 +213,89 @@ class Customer(Entity):
         else:
             elements.Void().set_in_screen(self.environment.screen, self.x_location, self.y_location)
             self.spawn(self.x_location, self.y_location - 1)
+
+    def determine_next_queues(self):
+        right = infinite
+        left = -1
+
+        right_cashier = self.chosen_cashier
+        left_cashier = self.chosen_cashier
+
+        for cashier in self.environment.cashiers:
+            if cashier != self.chosen_cashier:
+                if self.chosen_cashier.x_location < cashier.x_location < right:
+                    right = cashier.x_location
+                    right_cashier = cashier
+                if self.chosen_cashier.x_location > cashier.x_location > left:
+                    left = cashier.x_location
+                    left_cashier = cashier
+
+        return [left_cashier,right_cashier]
+
+    def search_different_queue(self):
+        queue = self.chosen_cashier
+        next_cashiers = self.determine_next_queues()
+
+        match self.customer_kind:
+            case "regular":
+                queue_size = len(self.chosen_cashier.customer_queue) - 1
+                #original_queue_size = len(self.chosen_cashier.customer_queue)
+                for cashier in next_cashiers:
+                    if cashier != self.chosen_cashier and len(cashier.customer_queue) < queue_size:
+                        queue_size = len(cashier.customer_queue)
+                        queue = cashier
+            case "observer":
+                items_in_queue_size = 0
+                #original_items_in_queue_size = 0
+                for customer in self.chosen_cashier.customer_queue:
+                    if customer != self :
+                        items_in_queue_size += customer.cart_size
+                        #original_items_in_queue_size += customer.cart_size
+
+                for cashier in next_cashiers:
+                    if cashier != self.chosen_cashier:
+                        cart_size = 0
+                        for customer in cashier.customer_queue:
+                            cart_size += customer.cart_size
+
+                        if cart_size < items_in_queue_size:
+                            items_in_queue_size = cart_size
+                            queue = cashier
+        
+        if queue != self.chosen_cashier:
+            self.chosen_cashier.customer_queue.remove(self)
+            queue.customer_queue.append(self)
+            self.chosen_cashier = queue
+
+            self.status = "changing queue"
+    
+    def change_queue_clocked(self):
+        if self.x_location <= self.chosen_cashier.x_location:
+            direction = 1
+        else:
+            direction = -1
+
+        queues_x_locations = []
+        for cashier in self.environment.cashiers:
+            queues_x_locations.append(cashier.x_location + 1)
+
+        if self.environment.screen.layout[self.y_location][self.x_location + direction] == self.icon:
+            if self.y_location + 1 == len(self.environment.screen.layout) - 1:
+                pass
+            elif self.x_location in queues_x_locations:    
+                elements.Queue().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+                self.spawn(self.x_location, self.y_location + 1)
+            else:
+                elements.Void().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+                self.spawn(self.x_location, self.y_location + 1)
+
+        else:
+            if self.x_location in queues_x_locations or self.y_location == len(self.environment.screen.layout) - 2:    
+                elements.Queue().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+                self.spawn(self.x_location + direction, self.y_location)
+            else:
+                elements.Void().set_in_screen(self.environment.screen, self.x_location, self.y_location)
+                self.spawn(self.x_location + direction, self.y_location)
+        
+        if self.x_location == self.chosen_cashier.x_location + 1:
+            self.status = "in queue"
