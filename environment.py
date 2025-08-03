@@ -45,7 +45,14 @@ class Environment:
             simulation_parameters (dict): Dictionary containing the parameters.
         """
 
-        self.time_scale = functions.check_time_scale(simulation_parameters["simulation_scale"])
+        match simulation_parameters["print_animation"]:
+            case True:
+                if functions.check_time_scale(simulation_parameters["simulation_scale"]) < 0.002 :
+                    self.time_scale = 0.002
+                else:
+                    self.time_scale = functions.check_time_scale(simulation_parameters["simulation_scale"])
+            case False:
+                self.time_scale = 0.000000000000000000000001
 
         functions.generate_cashiers(self, simulation_parameters["cashiers_quantity"],simulation_parameters["cashiers_y_axis"])
 
@@ -82,12 +89,11 @@ class Environment:
 
         start_time = round(time())
 
-        self.screen.print_screen()  #Initial screen printing.
+        if simulation_parameters["print_animation"]:
+            self.screen.print_screen()  #Initial screen printing.
 
         end = False
         while True:    # Loop: This simulation will run until user press ctrl+C.
-            print_screen = False # Reset print_screen to FALSE. I will let it TRUE so the time will update.
-
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:
                     case "busy":   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
@@ -96,7 +102,7 @@ class Environment:
                     case "available":  # If the cashier is available and there is someone in their queue, call them.
                         if len(cashier.customer_queue) == 0:
                             pass
-                        elif cashier.customer_queue[0].status == "ready":  # I used elif instead of else for a technical redundance (it was on purpose).
+                        else:
                             cashier.call_customer()
 
             if self.customer_count < customer_quantity and self.clock < simulation_time:
@@ -140,20 +146,20 @@ class Environment:
                         case "finished":
                             self.customers.remove(customer)
 
-            if print_screen:
+            if simulation_parameters["print_animation"]:
                 self.screen.print_screen()
 
-            print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
+                print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
 
-            print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
+                print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
 
-            if len(self.waiting_times) > 0:
-                print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                if len(self.waiting_times) > 0:
+                    print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
-            for cashier in self.cashiers:
-                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=cashier.current_customer_complete_time))}")
-                if cashier.current_customer_complete_time < self.clock and len(cashier.customer_queue) > 0:
-                    print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
+                for cashier in self.cashiers:
+                    print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=cashier.current_customer_complete_time))}")
+                    if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
+                        print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
 
             sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
 
@@ -163,7 +169,9 @@ class Environment:
             self.clock += 1   # Increase 1 second the internal clock.
     
         print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
-        print(f"Total de clientes: {self.customer_count}")
+        print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
+        print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
+        print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.

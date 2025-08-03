@@ -76,14 +76,17 @@ class Cashier(Entity):
         """
 
         self.scanned_items = 0  # Reset scanned items counter to 0.
-        self.current_customer = self.customer_queue[0]  # Assigns the first element (customer) in the list.
-        self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed))   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
 
-        self.current_customer.status = "paying" # Change customer's status to "paying".
-        self.status = "busy"    # Change its own status to "busy".
+        for customer in self.customer_queue :
+            if customer.y_location == self.y_location and customer.status == "ready" :
+                self.current_customer = customer
+                self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed))   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
 
-        self.current_customer.paying_arrival_time = self.environment.clock
-        self.environment.waiting_times.append(self.current_customer.paying_arrival_time-self.current_customer.queue_arrival_time)
+                self.current_customer.status = "paying" # Change customer's status to "paying".
+                self.status = "busy"    # Change its own status to "busy".
+
+                self.current_customer.paying_arrival_time = self.environment.clock
+                self.environment.waiting_times.append(self.current_customer.paying_arrival_time-self.current_customer.queue_arrival_time)
     
     def release_customer(self):
         """
