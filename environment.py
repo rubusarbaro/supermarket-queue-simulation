@@ -86,7 +86,7 @@ class Environment:
 
         end = False
         while True:    # Loop: This simulation will run until user press ctrl+C.
-            print_screen = True # Reset print_screen to FALSE. I will let it TRUE so the time will update.
+            print_screen = False # Reset print_screen to FALSE. I will let it TRUE so the time will update.
 
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:
@@ -117,7 +117,6 @@ class Environment:
                         customer.spawn(0,28)    # Spawn point set in (0,28).
                         self.customer_count += 1
                         next_arrival += int(round(np_random.exponential(avg_arrival_time)))
-                        print_screen = True # Change print_screen to True, to print the new customer.
             else:
                 end = True
                 
@@ -128,20 +127,16 @@ class Environment:
                     match customer.status:
                         case "exiting":
                             customer.exit_store_clocked()
-                            print_screen = True
                         case "spawned":
                             customer.choose_queue()
                         case "moving to queue":
                             customer.move_to_queue_clocked()
-                            print_screen = True
                         case "in queue":
                             customer.move_in_queue_clocked()
-                            print_screen = True
                             if customer == customer.chosen_cashier.customer_queue[-1] and customer.chosen_cashier.customer_queue.index(customer) != 0:
                                 customer.search_different_queue()
                         case "changing queue":
                             customer.change_queue_clocked()
-                            print_screen = True
                         case "finished":
                             self.customers.remove(customer)
 
@@ -157,6 +152,8 @@ class Environment:
 
             for cashier in self.cashiers:
                 print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=cashier.current_customer_complete_time))}")
+                if cashier.current_customer_complete_time < self.clock and len(cashier.customer_queue) > 0:
+                    print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
 
             sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
 
