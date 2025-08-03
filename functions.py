@@ -108,8 +108,13 @@ def generate_cashier_queue(screen: object, cashier: object):
         cashier (object): Cashier to create a queue.
     """
     from elements import Queue  # Queue class generates the queue tiles as object.
-    for i in range(cashier.y_location + 1, 28): # Create the queue from the main queue to the front of cashier.
+    for i in range(cashier.y_location + 1, len(screen.layout) - 2): # Create the queue from the main queue to the front of cashier.
         Queue().set_in_screen(screen, cashier.x_location + 1, i)
+
+def delete_cashier_queue(screen: object, cashier: object):
+    from elements import Void
+    for i in range(cashier.y_location + 1, len(screen.layout) - 2): # Create the queue from the main queue to the front of cashier.
+        Void().set_in_screen(screen, cashier.x_location + 1, i)
 
 def random_customer_kind(p_observer_kind: float):
     """
