@@ -19,7 +19,7 @@ for x in range(0, 29):
     elements.Queue().set_in_screen(screen, x, 28) # Crea la fila principal
 
 simulation_parameters = {
-    "simulation_scale": 0.002,
+    "simulation_scale": 0.005,
     "cashiers_quantity": 5,
     "cashiers_y_axis": 15,
     "customer_average_arrival_time": 2*60, # in seconds.
@@ -27,7 +27,7 @@ simulation_parameters = {
     "customer_quantity": infinite,
     "simulation_time": infinite,    # in seconds
     "fixed_arrival_times": False,
-    "print_animation": False
+    "print_animation": True
 }
 
 ## Simulation
