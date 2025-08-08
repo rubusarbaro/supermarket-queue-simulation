@@ -42,7 +42,7 @@ def generate_cashiers(environment: object, quantity: int, y_axis: int, x_locatio
         raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{max_quantity}{colors.Text.end}.")
     
     if quantity <= 0:    # If the requested quantity is higher than the capacity, it prints a color warning for user and stops the execution.
-        raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{1}{colors.Text.end}.")
+        raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad mínima de cajeros es {colors.Regular.bold}{1}{colors.Text.end}.")
 
     if align == "auto":    # If user selected "auto", generates x positions.
         n = (screen_width // 2)
