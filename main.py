@@ -27,7 +27,7 @@ simulation_parameters = {
     "customer_quantity": infinite,
     "simulation_time": infinite,    # in seconds
     "fixed_arrival_times": False,
-    "print_animation": True
+    "print_animation": False
 }
 
 ## Simulation

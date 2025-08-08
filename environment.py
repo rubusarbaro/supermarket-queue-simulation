@@ -70,13 +70,26 @@ class Environment:
             [68400,44], [72000,54], [75600,75], [79200,130], [82800,0], [86400,0]
         ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
 
+        walmart_saturday_modified = [   # Esta modificación añade corte a las 22:30h.
+            [25200,300], [28800,0], [32400,100], [36000,70], [39600,55], [43200,45],
+            [46800,42], [50400,40], [54000,40], [57600,40], [61200,40], [64800,40],
+            [68400,44], [72000,54], [75600,75], [79200,130], [79200+1800,0], [82800,0], [86400,0]
+        ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
+
         walmart_sunday = [
             [25200,9], [28800,16], [32400,29], [36000,45], [39600,68], [43200,89],
             [46800,110], [50400,124], [54000,134], [57600,141], [61200,141], [64800,138],
             [68400,124], [72000,97], [75600,65], [79200,37], [82800,0], [86400,0]
         ] #9 16 29 45 68 89 110 124 134 141 141 138 124 97 65 37. MAX: 150
 
-        walmart_hours = walmart_saturday
+        # SUGERENCIA DE LETTY: Primeras cuatro horas son Q1; últimas 2 horas son Q3.
+        cashiers_per_Q = [
+            [25200, 3],
+            [39600, 5],
+            [75600, 2]
+        ]
+
+        walmart_hours = walmart_saturday_modified
 
         #arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
 
@@ -94,6 +107,12 @@ class Environment:
 
         end = False
         while True:    # Loop: This simulation will run until user press ctrl+C.
+            for i in range(cashiers_per_Q:
+                if self.clock >= time[0] and self.clock < time[]:
+                    if len(self.cashiers) == 0:
+                        functions.generate_cashiers(self, cashiers_per_Q[key],simulation_parameters["cashiers_y_axis"])
+                    if cashiers_per_Q[key] len(self.cashiers)
+            
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:
                     case "busy":   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
