@@ -125,17 +125,17 @@ class Environment:
                     if self.clock >= cashiers_per_Q[i][0] and self.clock < cashiers_per_Q[i + 1][0]:
                         if len(self.cashiers) == 0:
                             for j in range(0, cashiers_per_Q[i][1]):
-                                self.cashiers.append(self.inactive_cashiers[j])
-                                self.inactive_cashiers.remove(self.inactive_cashiers[j])
-                                self.cashiers[j].status = "activating"
+                                self.inactive_cashiers[0].status = "activating"
+                                self.cashiers.append(self.inactive_cashiers[0])
+                                self.inactive_cashiers.remove(self.inactive_cashiers[0])
                         elif cashiers_per_Q[i][1] - len(self.cashiers) < 0:
                             for j in range(1, abs(cashiers_per_Q[i][1] - len(self.cashiers)) + 1):
                                 self.cashiers[-j].open_queue = False
                         elif cashiers_per_Q[i][1] - len(self.cashiers) > 0:
                             for j in range(0, cashiers_per_Q[i][1] - len(self.cashiers)):
-                                self.cashiers.append(self.inactive_cashiers[j])
-                                self.inactive_cashiers[j].status = "activating"
-                                self.inactive_cashiers.remove(self.inactive_cashiers[j])
+                                self.inactive_cashiers[0].status = "activating"
+                                self.cashiers.append(self.inactive_cashiers[0])
+                                self.inactive_cashiers.remove(self.inactive_cashiers[0])
             
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:

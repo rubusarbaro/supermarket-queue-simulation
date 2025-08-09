@@ -58,6 +58,7 @@ def generate_cashiers_n(environment: object, quantity: int, y_axis: int, x_locat
             n += 3
 
         x_locations = [x for pair in zip_longest(left_list, right_list) for x in pair if x is not None]
+        #x_locations.sort(reverse=True)
 
     for i in range(0,quantity):
         cashier = Cashier(environment, x_locations[i], y_axis)
@@ -82,6 +83,7 @@ def generate_cashiers(environment: object, y_axis: int):
         n += 3
 
     x_locations = [x for pair in zip_longest(left_list, right_list) for x in pair if x is not None]
+    #x_locations.sort(reverse=True)
 
     for i in range(0,max_quantity):
         cashier = Cashier(environment, x_locations[i], y_axis)

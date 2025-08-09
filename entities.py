@@ -3,7 +3,7 @@
 
 # Modules to use in this file:
 from math import inf as infinite    # Infinite number is used by Customer to chose Cashier.
-#from numpy import random as np_random
+from numpy import random as np_random
 from random import triangular
 import colors   # Custom module: Allows to modify printed text.
 import elements # Custom module: Provides simulation objects that agents can interact with.
@@ -133,7 +133,8 @@ class Customer(Entity):
         self.environment = environment
         self.customer_id = 0
         self.customer_kind = customer_kind  # Tipos: regular y observer
-        self.cart_size = round(triangular(1,50))
+        self.cart_size = round(triangular(1,100))
+        #self.cart_size = round(np_random.exponential(50))
         self.status = "spawned"
         self.chosen_cashier = None
         self.queue_arrival_time = 0
