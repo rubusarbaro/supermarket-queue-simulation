@@ -32,6 +32,7 @@ class Environment:
         self.clock = 0
         self.time_scale = 0.0
         self.cashiers = []
+        self.inactive_cashiers = []
         self.customer_count = 0
         self.customers = []
         self.waiting_times = []
@@ -54,7 +55,11 @@ class Environment:
             case False:
                 self.time_scale = 0.000000000000000000000001
 
-        functions.generate_cashiers(self, simulation_parameters["cashiers_quantity"],simulation_parameters["cashiers_y_axis"])
+        functions.generate_cashiers(self,simulation_parameters["cashiers_y_axis"])  # This lines were added for Letty's suggestions.
+        self.inactive_cashiers = self.cashiers.copy()   # This lines were added for Letty's suggestions.
+        self.cashiers = []  # This lines were added for Letty's suggestions.
+        for cashier in self.inactive_cashiers:
+            functions.delete_cashier_queue(self.screen, cashier)
 
         avg_arrival_time = simulation_parameters["customer_average_arrival_time"]
 
@@ -71,7 +76,7 @@ class Environment:
         ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
 
         walmart_saturday_modified = [   # Esta modificación añade corte a las 22:30h.
-            [25200,300], [28800,0], [32400,100], [36000,70], [39600,55], [43200,45],
+            [25200,300], [28800,166], [32400,100], [36000,70], [39600,55], [43200,45],
             [46800,42], [50400,40], [54000,40], [57600,40], [61200,40], [64800,40],
             [68400,44], [72000,54], [75600,75], [79200,130], [79200+1800,0], [82800,0], [86400,0]
         ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
@@ -86,8 +91,16 @@ class Environment:
         cashiers_per_Q = [
             [25200, 3],
             [39600, 5],
-            [75600, 2]
+            [75600, 2],
+            [82800,0]
         ]
+
+        for i in range(0, len(cashiers_per_Q)):
+            if i + 1 < len(cashiers_per_Q):
+                if cashiers_per_Q[i][1] - cashiers_per_Q[i + 1][1] > 0:
+                    cashiers_per_Q[i + 1][0] += 1800
+                if cashiers_per_Q[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
 
         walmart_hours = walmart_saturday_modified
 
@@ -107,20 +120,39 @@ class Environment:
 
         end = False
         while True:    # Loop: This simulation will run until user press ctrl+C.
-            for i in range(cashiers_per_Q:
-                if self.clock >= time[0] and self.clock < time[]:
-                    if len(self.cashiers) == 0:
-                        functions.generate_cashiers(self, cashiers_per_Q[key],simulation_parameters["cashiers_y_axis"])
-                    if cashiers_per_Q[key] len(self.cashiers)
+            if end == False:
+                for i in range(0, len(cashiers_per_Q)):
+                    if self.clock >= cashiers_per_Q[i][0] and self.clock < cashiers_per_Q[i + 1][0]:
+                        if len(self.cashiers) == 0:
+                            for j in range(0, cashiers_per_Q[i][1]):
+                                self.cashiers.append(self.inactive_cashiers[j])
+                                self.inactive_cashiers.remove(self.inactive_cashiers[j])
+                                self.cashiers[j].status = "activating"
+                        elif cashiers_per_Q[i][1] - len(self.cashiers) < 0:
+                            for j in range(1, abs(cashiers_per_Q[i][1] - len(self.cashiers)) + 1):
+                                self.cashiers[-j].open_queue = False
+                        elif cashiers_per_Q[i][1] - len(self.cashiers) > 0:
+                            for j in range(0, cashiers_per_Q[i][1] - len(self.cashiers)):
+                                self.cashiers.append(self.inactive_cashiers[j])
+                                self.inactive_cashiers[j].status = "activating"
+                                self.inactive_cashiers.remove(self.inactive_cashiers[j])
             
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:
+                    case "activating" :
+                        cashier.spawn()
+                        functions.generate_cashier_queue(self.screen, cashier)
+                        cashier.status = "available"
+                        cashier.open_queue = True
                     case "busy":   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
                         if self.clock > cashier.current_customer_complete_time:
                             cashier.release_customer()
                     case "available":  # If the cashier is available and there is someone in their queue, call them.
-                        if len(cashier.customer_queue) == 0:
-                            pass
+                        if len(cashier.customer_queue) == 0 and cashier.open_queue == False:
+                            functions.delete_cashier_queue(self.screen, cashier)
+                            cashier.disappear()
+                            self.inactive_cashiers.append(cashier)
+                            self.cashiers.remove(cashier)
                         else:
                             cashier.call_customer()
 

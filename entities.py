@@ -59,6 +59,7 @@ class Cashier(Entity):
         self.current_customer_complete_time = 0   # This parameter is important to release the customer according to the internal clock of the environment.
         self.scanned_items = 0
         self.status = "available"
+        self.open_queue = False
 
         environment.cashiers.append(self)   # Automatically appends the cashier to the environment's cashier list.
         functions.generate_cashier_queue(environment.screen, self)   # Automatically creates the queue design for the cashier, from y_location to the main line.
@@ -67,6 +68,9 @@ class Cashier(Entity):
         """
         Set the cashier in the screen's layout. It is important to execute this method before printing the screen.
         """
+        
+        if self.icon != "🛃":
+            self.icon = "🛃"
 
         self.environment.screen.layout[self.y_location][self.x_location] = self.icon    # This code change the blank space in the coordinates of Screen.layout by the agent icon.
 
@@ -97,6 +101,12 @@ class Cashier(Entity):
         self.current_customer.status = "exiting"    # Change customer's status to "exiting".
         self.customer_queue.remove(self.current_customer)   # Remove current customer from the queue.
         self.current_customer = None    # Overwrite current customer to None.
+
+    def disappear(self):
+        if self.icon != "  ":
+            self.icon = "  "
+
+        self.environment.screen.layout[self.y_location][self.x_location] = self.icon
 
 
 class Customer(Entity):
@@ -156,19 +166,21 @@ class Customer(Entity):
             case "regular":
                 queue_size = infinite
                 for cashier in self.environment.cashiers:
-                    if len(cashier.customer_queue) < queue_size:
-                        queue_size = len(cashier.customer_queue)
-                        queue = cashier
+                    if cashier.open_queue:
+                        if len(cashier.customer_queue) < queue_size:
+                            queue_size = len(cashier.customer_queue)
+                            queue = cashier
             case "observer":
                 items_in_queue_size = infinite
                 for cashier in self.environment.cashiers:
                     cart_size = 0
-                    for customer in cashier.customer_queue:
-                        cart_size += customer.cart_size
+                    if cashier.open_queue:
+                        for customer in cashier.customer_queue:
+                            cart_size += customer.cart_size
 
-                    if cart_size < items_in_queue_size:
-                        items_in_queue_size = cart_size
-                        queue = cashier
+                        if cart_size < items_in_queue_size:
+                            items_in_queue_size = cart_size
+                            queue = cashier
         queue.customer_queue.append(self)
         self.chosen_cashier = queue
 
@@ -225,7 +237,7 @@ class Customer(Entity):
         left_cashier = self.chosen_cashier
 
         for cashier in self.environment.cashiers:
-            if cashier != self.chosen_cashier:
+            if cashier != self.chosen_cashier and cashier.open_queue:
                 if self.chosen_cashier.x_location < cashier.x_location < right:
                     right = cashier.x_location
                     right_cashier = cashier
