@@ -20,7 +20,7 @@ for x in range(0, 29):
 
 simulation_parameters = {
     "simulation_scale": 0.005,
-    "cashiers_quantity": 5,
+    #"cashiers_quantity": 5,
     "cashiers_y_axis": 15,
     "customer_average_arrival_time": 2*60, # in seconds.
     "observer_customer_probability": 0.1,

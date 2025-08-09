@@ -22,7 +22,7 @@ def clear_screen():
     else:
         print("Function not compatible with the current os.")
 
-def generate_cashiers(environment: object, quantity: int, y_axis: int, x_locations = [], align = "auto") :
+def generate_cashiers_n(environment: object, quantity: int, y_axis: int, x_locations = [], align = "auto") :
     """
     Generates the specified quantity of cashiers.
 
@@ -58,11 +58,37 @@ def generate_cashiers(environment: object, quantity: int, y_axis: int, x_locatio
             n += 3
 
         x_locations = [x for pair in zip_longest(left_list, right_list) for x in pair if x is not None]
+        #x_locations.sort(reverse=True)
 
     for i in range(0,quantity):
         cashier = Cashier(environment, x_locations[i], y_axis)
         cashier.cashier_id = i + 1
         cashier.spawn()
+
+def generate_cashiers(environment: object, y_axis: int):
+    from entities import Cashier    # Agent
+    screen_width = environment.screen.width
+    max_quantity = int((screen_width-2) // 3)   # Calculates the maximum quantity that is possible in for the current layout.
+
+    n = (screen_width // 2)
+    left_list = []
+    while n > 0:
+        left_list.append(int(n) - 1)
+        n -= 3
+
+    n = (screen_width // 2) + 3
+    right_list = []
+    while n < screen_width - 1:
+        right_list.append(int(n) - 1)
+        n += 3
+
+    x_locations = [x for pair in zip_longest(left_list, right_list) for x in pair if x is not None]
+    #x_locations.sort(reverse=True)
+
+    for i in range(0,max_quantity):
+        cashier = Cashier(environment, x_locations[i], y_axis)
+        cashier.cashier_id = i + 1
+        #cashier.spawn()
 
 def check_time_scale(scale: float):
     """
