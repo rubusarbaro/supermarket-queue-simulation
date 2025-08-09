@@ -1,3 +1,6 @@
+from math import inf as infinite
+import market
+
 simulation_parameters = {
     # Running parameters
     "print_animation": True,                    # Listo

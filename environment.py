@@ -11,7 +11,6 @@ from time import sleep,time             # Regulates simulation's internal clock.
 import colors
 #import emoji       # Allows printing emojis.
 import functions    # Custom module: Useful functions
-import market
 
 class Environment:
     """
@@ -98,8 +97,8 @@ class Environment:
                 cashier_quantity (int|list): If dynamic_cashier_generation is True, a list containing the quantity of cashiers per hour must be provided; format is [[t1, n1], [t2, n2], …, [tn, n]]. If dynamic_cashier_generation is False, an integer must be passes and this fixed quantity of cashiers will be used from the beginning to the end of the simulation.
         """
 
-        for key in simulation_parameters.keys():
-            exec(f"self.{key} = {simulation_parameters[key]}")
+        for key, value in simulation_parameters.items():
+            setattr(self, key, value)
 
     def start(self):
         """
@@ -108,7 +107,7 @@ class Environment:
         """
 
         if self.dynamic_cashier_generation:
-            try:
+            """try:
                 for i in range(0, len(self.cashier_quantity)):
                     if i + 1 < len(self.cashier_quantity):
                         if self.cashier_quantity[i][1] - self.cashier_quantity[i + 1][1] > 0:
@@ -116,7 +115,7 @@ class Environment:
                         if self.cashier_quantity[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
                             raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
             except:
-                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser una lista conteniendo la cantidad de cajeros por cuartil.")
+                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser una lista conteniendo la cantidad de cajeros por cuartil.")"""
             
             functions.generate_cashiers(self, self.cashiers_y_axis)
             self.inactive_cashiers = self.cashiers.copy()
@@ -325,4 +324,4 @@ class Screen:
 
         output = "\n".join(rows)
 
-        print(output, end="", flush=True)
+        print(output, end="\n")
