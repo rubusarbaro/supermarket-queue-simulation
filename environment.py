@@ -4,12 +4,14 @@
 # Modules to use in this file:
 from datetime import timedelta
 from entities import Customer           # To create customer agents.
+from math import inf as infinite
 from numpy import mean
 from numpy import random as np_random
 from time import sleep,time             # Regulates simulation's internal clock.
 import colors
 #import emoji       # Allows printing emojis.
 import functions    # Custom module: Useful functions
+import market
 
 class Environment:
     """
@@ -28,114 +30,150 @@ class Environment:
     """
 
     def __init__(self):
+        # Environment properties
         self.screen = None
         self.clock = 0
-        self.time_scale = 0.0
         self.cashiers = []
         self.inactive_cashiers = []
         self.customer_count = 0
         self.customers = []
         self.waiting_times = []
 
-    def start(self, simulation_parameters: dict):
+        # Running parameters
+        self.print_animation = False
+        self.time_scale = 0.005
+        self.dynamic_arrival_time = False
+        self.dynamic_cashier_generation = False
+        self.dynamic_scanning_time = False
+        self.customer_quantity = infinite
+        self.simulation_time = infinite
+        self.arrival_time_distribution = "exponential"
+        self.items_in_cart_distribution = "triangular"
+
+        # Fixed parameters
+        self.arrival_time = 1
+        self.scanning_time = 3
+        self.observer_customer_probability = 0.1
+        self.cashiers_y_axis = 15
+
+        # Variable parameters:
+        self.cashier_quantity = 5
+
+    def define_parameters(self, simulation_parameters: dict):
+        """
+        Define simulation parameters.
+        
+        Args:
+            simulation_parameters (dict): Dictionary containing the parameters listed below.
+
+            Running parameters:
+                print_animation (bool): Allow to turn on/off printing in screen the animation. Turning this feature off (False) allows to run the simulation  faster. Turning it on limits the simulation to 1 frame per 0.005 seconds (200 FPS).
+        
+                time_scale (float): In seconds; simulation prints a frame each t seconds. Scale is t:1 second. This parameter is only valid if "print_animation" is True. If print_animation is False, the simulation will run at the lowest time possible.
+
+                dynamic_arrival_time (bool): If True, a list containing the distribution of arrivals must be passed, if False, a fixed arrival time must be passed. This allows to add an arrival distribution similar to a real supermarket.
+
+                dynamic_cashier_generation (bool): If True, a list containing the times to generate a cashier must be passed, if False, a fixed quantity of cashiers from the beginning to the end must be passed.
+
+                dynamic_scanning_time (bool): If True, scanning time for each item will be calculated using a random exponential time that must be passed as integer. If False, all items will have the same scanning time.
+
+                customer_quantity (int): Simulate until n quantity of customers is generated. The simulation will end when all the generated customers leave the supermarket. To disable this limit, it is recommended to used infinite from math module, inf function.
+
+                simulation_time (int): Generate customers until t seconds. The simulation will end when all the generated customers leave the supermarket. If dynamic_arrival_time is True, simulation_time must be greater than than t seconds in arrival distribution. To disable this limit, it is recommended to used infinite from math module, inf function.
+
+                arrival_time_distribution (str): "exponential" or "poisson"
+
+                items_in_cart_distribution (str): "triangular" or "normal"
+
+            Fixed parameters:
+                arrival_time (int|list): If dynamic_arrival_time is True, a list containing the distribution of time must be provided; format is [[t1, arrival_time], [t2, arrival_time], …, [tn, arrival_time]]. If dynamic_arrival_time is False, an integer must be passed, and all the customers will arrive at the same average arrival time, using the distribution in arrival_time_distribution.
+
+                scanning_time (int): Average scanning time per item.
+
+                observer_customer_probability (float): Probability that a customer is observer kind.
+
+                cashiers_y_axis (int): All cashiers will be generated at the same y axis.
+
+            Variable parameters:
+                cashier_quantity (int|list): If dynamic_cashier_generation is True, a list containing the quantity of cashiers per hour must be provided; format is [[t1, n1], [t2, n2], …, [tn, n]]. If dynamic_cashier_generation is False, an integer must be passes and this fixed quantity of cashiers will be used from the beginning to the end of the simulation.
+        """
+
+        for key in simulation_parameters.keys():
+            exec(f"self.{key} = {simulation_parameters[key]}")
+
+    def start(self):
         """
         Start simulation. To finish the simulation press CTRL+C.
         This function only works with this specific simulation (supermarket queue).
-
-        Args:
-            simulation_parameters (dict): Dictionary containing the parameters.
         """
 
-        match simulation_parameters["print_animation"]:
-            case True:
-                if functions.check_time_scale(simulation_parameters["simulation_scale"]) < 0.002 :
-                    self.time_scale = 0.002
-                else:
-                    self.time_scale = functions.check_time_scale(simulation_parameters["simulation_scale"])
-            case False:
-                self.time_scale = 0.000000000000000000000001
-
-        functions.generate_cashiers(self,simulation_parameters["cashiers_y_axis"])  # This lines were added for Letty's suggestions.
-        self.inactive_cashiers = self.cashiers.copy()   # This lines were added for Letty's suggestions.
-        self.cashiers = []  # This lines were added for Letty's suggestions.
-        for cashier in self.inactive_cashiers:
-            functions.delete_cashier_queue(self.screen, cashier)
-
-        avg_arrival_time = simulation_parameters["customer_average_arrival_time"]
-
-        observer_customer_p = simulation_parameters["observer_customer_probability"]
-
-        customer_quantity = simulation_parameters["customer_quantity"]
-
-        simulation_time = simulation_parameters["simulation_time"]
-
-        walmart_saturday = [
-            [25200,300], [28800,166], [32400,100], [36000,70], [39600,55], [43200,45],
-            [46800,42], [50400,40], [54000,40], [57600,40], [61200,40], [64800,40],
-            [68400,44], [72000,54], [75600,75], [79200,130], [82800,0], [86400,0]
-        ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
-
-        walmart_saturday_modified = [   # Esta modificación añade corte a las 22:30h.
-            [25200,300], [28800,166], [32400,100], [36000,70], [39600,55], [43200,45],
-            [46800,42], [50400,40], [54000,40], [57600,40], [61200,40], [64800,40],
-            [68400,44], [72000,54], [75600,75], [79200,130], [79200+1800,0], [82800,0], [86400,0]
-        ] #19 34 54 78 101 120 131 135 135 135 135 135 124 101 72 41  MAX: 150
-
-        walmart_sunday = [
-            [25200,9], [28800,16], [32400,29], [36000,45], [39600,68], [43200,89],
-            [46800,110], [50400,124], [54000,134], [57600,141], [61200,141], [64800,138],
-            [68400,124], [72000,97], [75600,65], [79200,37], [82800,0], [86400,0]
-        ] #9 16 29 45 68 89 110 124 134 141 141 138 124 97 65 37. MAX: 150
-
-        # SUGERENCIA DE LETTY: Primeras cuatro horas son Q1; últimas 2 horas son Q3.
-        cashiers_per_Q = [
-            [25200, 3],
-            [39600, 5],
-            [75600, 2],
-            [82800,0]
-        ]
-
-        for i in range(0, len(cashiers_per_Q)):
-            if i + 1 < len(cashiers_per_Q):
-                if cashiers_per_Q[i][1] - cashiers_per_Q[i + 1][1] > 0:
-                    cashiers_per_Q[i + 1][0] += 1800
-                if cashiers_per_Q[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
-                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
-
-        walmart_hours = walmart_saturday_modified
-
-        #arrival_times = functions.generate_exponential_arrival_time(1000,5)    # Get a list of 1,000 customer arrival times with an average of 15 seconds.
-
-        next_arrival = int(round(np_random.exponential(avg_arrival_time)))
-
-        if simulation_parameters["fixed_arrival_times"] == False:
-            self.clock = 25200
-            avg_arrival_time = walmart_hours[0][1]
-            next_arrival = self.clock + int(round(np_random.exponential(avg_arrival_time))) + 1
+        if self.dynamic_cashier_generation:
+            try:
+                for i in range(0, len(self.cashier_quantity)):
+                    if i + 1 < len(self.cashier_quantity):
+                        if self.cashier_quantity[i][1] - self.cashier_quantity[i + 1][1] > 0:
+                            self.cashier_quantity[i + 1][0] += 1800
+                        if self.cashier_quantity[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
+                            raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
+            except:
+                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser una lista conteniendo la cantidad de cajeros por cuartil.")
+            
+            functions.generate_cashiers(self, self.cashiers_y_axis)
+            self.inactive_cashiers = self.cashiers.copy()
+            self.cashiers = []
+            for cashier in self.inactive_cashiers:
+                functions.delete_cashier_queue(self.screen, cashier)
+        else:
+            try:
+                functions.generate_cashiers_n(self, self.cashier_quantity, self.cashiers_y_axis)
+            except:
+                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser integer.")
+            
+        if self.dynamic_arrival_time:
+            try:
+                self.clock = self.arrival_time[0][0]
+                avg_arrival_time = self.arrival_time[0][1]
+                next_arrival = self.clock + np_random.exponential(avg_arrival_time)
+            except:
+                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser una lista conteniendo las distribuciones.")
+        else:
+            try:
+                avg_arrival_time = self.arrival_time
+            except:
+               raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser un integer.") 
+            
+            next_arrival = np_random.exponential(avg_arrival_time)
 
         start_time = round(time())
 
-        if simulation_parameters["print_animation"]:
+        if self.print_animation:
+            if functions.check_time_scale(self.time_scale) < 0.002 :
+                    self.time_scale = 0.002
             self.screen.print_screen()  #Initial screen printing.
+        else:
+            self.time_scale = 0
 
         end = False
         while True:    # Loop: This simulation will run until user press ctrl+C.
-            if end == False:
-                for i in range(0, len(cashiers_per_Q)):
-                    if self.clock >= cashiers_per_Q[i][0] and self.clock < cashiers_per_Q[i + 1][0]:
-                        if len(self.cashiers) == 0:
-                            for j in range(0, cashiers_per_Q[i][1]):
-                                self.inactive_cashiers[0].status = "activating"
-                                self.cashiers.append(self.inactive_cashiers[0])
-                                self.inactive_cashiers.remove(self.inactive_cashiers[0])
-                        elif cashiers_per_Q[i][1] - len(self.cashiers) < 0:
-                            for j in range(1, abs(cashiers_per_Q[i][1] - len(self.cashiers)) + 1):
-                                self.cashiers[-j].open_queue = False
-                        elif cashiers_per_Q[i][1] - len(self.cashiers) > 0:
-                            for j in range(0, cashiers_per_Q[i][1] - len(self.cashiers)):
-                                self.inactive_cashiers[0].status = "activating"
-                                self.cashiers.append(self.inactive_cashiers[0])
-                                self.inactive_cashiers.remove(self.inactive_cashiers[0])
+            if end == False and self.dynamic_cashier_generation:
+                try:
+                    for i in range(0, len(self.cashier_quantity)):
+                        if self.clock >= self.cashier_quantity[i][0] and self.clock < self.cashier_quantity[i + 1][0]:
+                            if len(self.cashiers) == 0:
+                                for j in range(0, self.cashier_quantity[i][1]):
+                                    self.inactive_cashiers[0].status = "activating"
+                                    self.cashiers.append(self.inactive_cashiers[0])
+                                    self.inactive_cashiers.remove(self.inactive_cashiers[0])
+                            elif self.cashier_quantity[i][1] - len(self.cashiers) < 0:
+                                for j in range(1, abs(self.cashier_quantity[i][1] - len(self.cashiers)) + 1):
+                                    self.cashiers[-j].open_queue = False
+                            elif self.cashier_quantity[i][1] - len(self.cashiers) > 0:
+                                for j in range(0, self.cashier_quantity[i][1] - len(self.cashiers)):
+                                    self.inactive_cashiers[0].status = "activating"
+                                    self.cashiers.append(self.inactive_cashiers[0])
+                                    self.inactive_cashiers.remove(self.inactive_cashiers[0])
+                except:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} Se debe proporcionar la cantidad de cajeros por cuartiles en una lista en cashier_quantity.")
             
             for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
                 match cashier.status:
@@ -156,30 +194,26 @@ class Environment:
                         else:
                             cashier.call_customer()
 
-            if self.customer_count < customer_quantity and self.clock < simulation_time:
-                #if round(self.clock) == arrival_times[self.customer_count]:  # When internal clock is equal to the arrival time of the current customer, generate a new customer.
-                if end == False:
-                    if self.clock > next_arrival:
-                        if simulation_parameters["fixed_arrival_times"] == False:
-                
-                            for i in range(0, len(walmart_hours)):
-                                if self.clock >= walmart_hours[i][0] and self.clock < walmart_hours[i+1][0]:
-                                    avg_arrival_time = walmart_hours[i][1]
+            if self.customer_count < self.customer_quantity and self.clock < self.simulation_time:
+                if end == False and self.clock > next_arrival:
+                    if self.dynamic_arrival_time:
+            
+                        for i in range(0, len(self.arrival_time)):
+                            if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                                avg_arrival_time = self.arrival_time[i][1]
 
-                                    if avg_arrival_time == 0:
-                                        end = True
+                                if avg_arrival_time == 0:
+                                    end = True
 
-                        customer = Customer(self, functions.random_customer_kind(observer_customer_p))  # Create a customer; "observer" customer is generated with a probability of 3%.
-                        customer.customer_id = self.customer_count + 1
-                        customer.spawn(0,28)    # Spawn point set in (0,28).
-                        self.customer_count += 1
-                        next_arrival += int(round(np_random.exponential(avg_arrival_time)))
+                    customer = Customer(self, functions.random_customer_kind(self.observer_customer_probability))  # Create a customer; "observer" customer is generated with a probability of 3%.
+                    customer.customer_id = self.customer_count + 1
+                    customer.spawn(0,28)    # Spawn point set in (0,28).
+                    self.customer_count += 1
+                    next_arrival += np_random.exponential(avg_arrival_time)
             else:
                 end = True
                 
-            if len(self.customers) == 0:   # If there are not customers in the simulation, do nothing.
-                pass
-            else :
+            if len(self.customers) > 0:
                 for customer in self.customers:    # Evaluates the status for each customer in the simulation an execute a method or action according their status.
                     match customer.status:
                         case "exiting":
@@ -197,7 +231,7 @@ class Environment:
                         case "finished":
                             self.customers.remove(customer)
 
-            if simulation_parameters["print_animation"]:
+            if self.print_animation:
                 self.screen.print_screen()
 
                 print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}      {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
@@ -212,7 +246,8 @@ class Environment:
                     if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
                         print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
 
-            sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
+            if self.time_scale > 0:
+                sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
 
             if end and len(self.customers) == 0:
                 break
@@ -283,8 +318,11 @@ class Screen:
 
         # First, it iterates every sublist in the list "layout". Then, it iterates every item in the sublist.
         # It concatenates every item in the sublist to create a row. It prints the row.
+        rows = []
         for line in self.layout:
-            row = ""
-            for item in line:
-                row += item
-            print(row)
+            row = "".join(line)
+            rows.append(row)
+
+        output = "\n".join(rows)
+
+        print(output, end="", flush=True)
