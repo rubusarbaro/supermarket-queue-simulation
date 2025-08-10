@@ -98,7 +98,8 @@ class Environment:
         """
 
         for key, value in simulation_parameters.items():
-            setattr(self, key, value)
+            if hasattr(self, key):
+                setattr(self, key, value)
 
     def start(self):
         """
