@@ -47,19 +47,20 @@ class Cashier(Entity):
         status (str): Current status; it has two options 1) "available" and 2) "busy".
     """
 
-    def __init__(self, environment: object, x_location: int, y_location: int, scan_speed = 4):
+    def __init__(self, environment: object, x_location: int, y_location: int, dynamic_scanning_time: bool, average_scan_speed = 4):
         self.icon = "🛃"
         self.x_location = x_location
         self.y_location = y_location
         self.environment = environment
         self.cashier_id = 0
-        self.scan_speed = scan_speed
+        self.average_scan_speed = average_scan_speed
         self.customer_queue = []
         self.current_customer = None
         self.current_customer_complete_time = 0   # This parameter is important to release the customer according to the internal clock of the environment.
         self.scanned_items = 0
         self.status = "available"
         self.open_queue = False
+        self.dynamic_scanning_time = dynamic_scanning_time
 
         environment.cashiers.append(self)   # Automatically appends the cashier to the environment's cashier list.
         functions.generate_cashier_queue(environment.screen, self)   # Automatically creates the queue design for the cashier, from y_location to the main line.
@@ -84,7 +85,13 @@ class Cashier(Entity):
         for customer in self.customer_queue :
             if customer.y_location == self.y_location and customer.status == "ready" :
                 self.current_customer = customer
-                self.current_customer_complete_time = int(round(self.environment.clock + self.current_customer.cart_size * self.scan_speed))   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
+
+                if self.dynamic_scanning_time:
+                    self.current_customer_complete_time = self.environment.clock
+                    for i in range(0,self.current_customer.cart_size):
+                        self.current_customer_complete_time += np_random.exponential(self.average_scan_speed)
+                else:
+                    self.current_customer_complete_time = self.environment.clock + (self.current_customer.cart_size * self.scan_speed)   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
 
                 self.current_customer.status = "paying" # Change customer's status to "paying".
                 self.status = "busy"    # Change its own status to "busy".
@@ -128,13 +135,12 @@ class Customer(Entity):
         status (str): Current status; options 1) "spawned", 2) "moving to queue", 3) "in queue", 4) "paying", 5) "exiting", and 6) "finished".
     """
 
-    def __init__(self, environment: object, customer_kind: str):
+    def __init__(self, environment: object, customer_kind: str, minimum_cart_items=1, maximum_cart_items=100):
         self.icon = "👤"
         self.environment = environment
         self.customer_id = 0
         self.customer_kind = customer_kind  # Tipos: regular y observer
-        self.cart_size = round(triangular(1,100))
-        #self.cart_size = round(np_random.exponential(50))
+        self.cart_size = round(triangular(minimum_cart_items,maximum_cart_items))
         self.status = "spawned"
         self.chosen_cashier = None
         self.queue_arrival_time = 0

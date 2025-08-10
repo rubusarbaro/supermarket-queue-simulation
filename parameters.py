@@ -4,20 +4,21 @@ import market
 simulation_parameters = {
     # Running parameters
     "print_animation": True,                    # Listo
-    "time_scale": 0.002,                        # Listo
+    "time_scale": 0.005,                        # Listo
     "dynamic_arrival_time": True,               # Listo
     "dynamic_cashier_generation": True,         # Listo
-    "dynamic_scanning_time": True,
+    "dynamic_scanning_time": True,              # Listo
     "customer_quantity": infinite,              # Listo
     "simulation_time": infinite,                # Listo
-    "arrival_time_distribution": "exponential",
-    "items_in_cart_distribution": "triangular",
+    "arrival_time_distribution": "exponential", # Listo
 
     # Fixed parameters
     "arrival_time": market.Popular_Hours.saturday_modified, # Listo
-    "scanning_time": 3,
+    "scanning_time": 4,                                     # Listo
     "observer_customer_probability": 0.1,                   # Listo
     "cashiers_y_axis": 15,                                  # Listo
+    "minimum_cart_items": 1,                                # Listo
+    "maximum_cart_items": 100,                              # Listo
 
     # Variable parameters:
     "cashier_quantity": market.Quartiles.saturday   # Listo
