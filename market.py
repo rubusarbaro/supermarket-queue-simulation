@@ -19,8 +19,8 @@ class Popular_Hours:
 
 class Quartiles:    # This idea was introduced by Leticia Rodríguez.
     saturday = [
-        [25200, 3],
-        [39600, 5],
-        [75600, 2],
+        [25200, 5], # 07:00 to 10:59
+        [39600, 5], # 11:00 to 20:59
+        [75600, 5], # 21:00 to 22:59
         [82800, 0]  # Additional Q added to avoid problems with for bucle.
     ]

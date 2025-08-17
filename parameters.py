@@ -3,14 +3,15 @@ import market
 
 simulation_parameters = {
     # Running parameters
-    "print_animation": True,                    # Listo
-    "time_scale": 0.005,                        # Listo
+    "print_animation": False,                    # Listo
+    "time_scale": 0.002,                        # Listo
     "dynamic_arrival_time": True,               # Listo
     "dynamic_cashier_generation": True,         # Listo
-    "dynamic_scanning_time": True,              # Listo
+    "dynamic_scanning_time": False,              # Listo
     "customer_quantity": infinite,              # Listo
     "simulation_time": infinite,                # Listo
-    "arrival_time_distribution": "exponential", # Listo
+    "arrival_time_distribution": "poisson", # Listo
+    "iterations": 1,
 
     # Fixed parameters
     "arrival_time": market.Popular_Hours.saturday_modified, # Listo

@@ -2,15 +2,16 @@
 
 
 # Modules to use in this file:
-from datetime import timedelta
+from datetime import timedelta, datetime
 from entities import Customer           # To create customer agents.
 from math import inf as infinite
-from numpy import mean
+from numpy import mean, nan, isnan
 from numpy import random as np_random
 from time import sleep,time             # Regulates simulation's internal clock.
 import colors
 #import emoji       # Allows printing emojis.
 import functions    # Custom module: Useful functions
+import pandas as pd
 
 class Environment:
     """
@@ -37,6 +38,8 @@ class Environment:
         self.customer_count = 0
         self.customers = []
         self.waiting_times = []
+        self.second_counter = 0
+        self.i = 0
 
         # Running parameters
         self.print_animation = False
@@ -47,6 +50,7 @@ class Environment:
         self.customer_quantity = infinite
         self.simulation_time = infinite
         self.arrival_time_distribution = "exponential"
+        self.iterations = 1
 
         # Fixed parameters
         self.arrival_time = 1
@@ -58,6 +62,32 @@ class Environment:
 
         # Variable parameters:
         self.cashier_quantity = 5
+
+        self.statistics = {
+            "cashier_usage": pd.DataFrame(data=None, columns=["Iteración", "Cajero ID", "Hora apertura", "Hora cierre", "Tiempo ocupado"]),
+            "customers": pd.DataFrame(data=None, columns=["Iteración", "Cliente ID", "Hora llegada", "Tiempo fila", "Tiempo atención", "Hora salida", "Tamaño carrito"]),
+            "cashier_per_hour": pd.DataFrame(data=None, columns=["Iteración","Cajero ID", "Hora inicio", "Hora fin", "Tiempo promedio fila", "Longitud promedio fila", "Tiempo promedio atención"])
+        }
+
+        self.statistics["cashier_usage"]["Iteración"] = self.statistics["cashier_usage"]["Iteración"].astype("int64")
+        self.statistics["cashier_usage"]["Cajero ID"] = self.statistics["cashier_usage"]["Cajero ID"].astype("int64")
+        self.statistics["cashier_usage"]["Hora apertura"] = self.statistics["cashier_usage"]["Hora apertura"].astype("timedelta64[ns]")
+        self.statistics["cashier_usage"]["Hora cierre"] = self.statistics["cashier_usage"]["Hora cierre"].astype("timedelta64[ns]")
+        self.statistics["cashier_usage"]["Tiempo ocupado"] = self.statistics["cashier_usage"]["Tiempo ocupado"].astype("int64")
+        self.statistics["customers"]["Iteración"] = self.statistics["customers"]["Iteración"].astype("int64")
+        self.statistics["customers"]["Cliente ID"] = self.statistics["customers"]["Cliente ID"].astype("int64")
+        self.statistics["customers"]["Hora llegada"] = self.statistics["customers"]["Hora llegada"].astype("timedelta64[ns]")
+        self.statistics["customers"]["Tiempo fila"] = self.statistics["customers"]["Tiempo fila"].astype("int64")
+        self.statistics["customers"]["Tiempo atención"] = self.statistics["customers"]["Tiempo atención"].astype("int64")
+        self.statistics["customers"]["Hora salida"] = self.statistics["customers"]["Hora salida"].astype("timedelta64[ns]")
+        self.statistics["customers"]["Tamaño carrito"] = self.statistics["customers"]["Tamaño carrito"].astype("int64")
+        self.statistics["cashier_per_hour"]["Iteración"] = self.statistics["cashier_per_hour"]["Iteración"].astype("int64")
+        self.statistics["cashier_per_hour"]["Cajero ID"] = self.statistics["cashier_per_hour"]["Cajero ID"].astype("int64")
+        self.statistics["cashier_per_hour"]["Hora inicio"] = self.statistics["cashier_per_hour"]["Hora inicio"].astype("timedelta64[ns]")
+        self.statistics["cashier_per_hour"]["Hora fin"] = self.statistics["cashier_per_hour"]["Hora fin"].astype("timedelta64[ns]")
+        self.statistics["cashier_per_hour"]["Tiempo promedio fila"] = self.statistics["cashier_per_hour"]["Tiempo promedio fila"].astype("int64")
+        self.statistics["cashier_per_hour"]["Longitud promedio fila"] = self.statistics["cashier_per_hour"]["Longitud promedio fila"].astype("int64")
+        self.statistics["cashier_per_hour"]["Tiempo promedio fila"] = self.statistics["cashier_per_hour"]["Tiempo promedio fila"].astype("int64")
 
     def define_parameters(self, simulation_parameters: dict):
         """
@@ -108,174 +138,224 @@ class Environment:
         This function only works with this specific simulation (supermarket queue).
         """
 
-        if self.dynamic_cashier_generation:
-            functions.generate_cashiers(self, self.cashiers_y_axis, self.scanning_time, self.dynamic_scanning_time)
-            self.inactive_cashiers = self.cashiers.copy()
+        for iteration in range(self.iterations):
+            self.clock = 0
             self.cashiers = []
-            for cashier in self.inactive_cashiers:
-                functions.delete_cashier_queue(self.screen, cashier)
-            
-            try:
-                for i in range(0, len(self.cashier_quantity)):
-                    if i + 1 < len(self.cashier_quantity):
-                        if self.cashier_quantity[i][1] - self.cashier_quantity[i + 1][1] > 0:
-                            self.cashier_quantity[i + 1][0] += 1800
-                        if self.cashier_quantity[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
-                            raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
-            except:
-                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser una lista conteniendo la cantidad de cajeros por cuartil.")
-        else:
-            try:
-                functions.generate_cashiers_n(self, self.cashier_quantity, self.cashiers_y_axis, self.scanning_time, self.dynamic_scanning_time)
-            except:
-                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser integer.")
+            self.inactive_cashiers = []
+            self.customer_count = 0
+            self.customers = []
+            self.waiting_times = []
+            self.second_counter = 0
+            self.i = iteration + 1
 
-        match self.arrival_time_distribution:
-            case "exponential":
-                arrival_distribution = np_random.exponential
-            case "poisson":
-                arrival_distribution = np_random.poisson
-            case "":
-                arrival_distribution = np_random.exponential
-            case _:
-                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} Distribución estadística no compatible para arrival_time_distribution.")
-            
-        if self.dynamic_arrival_time:
-            try:
-                self.clock = self.arrival_time[0][0]
-                avg_arrival_time = self.arrival_time[0][1]
-                next_arrival = self.clock + arrival_distribution(avg_arrival_time)
-            except:
-                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser una lista conteniendo las distribuciones.")
-        else:
-            try:
-                avg_arrival_time = self.arrival_time
-            except:
-               raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser un integer.") 
-            
-            next_arrival = arrival_distribution(avg_arrival_time)
-
-        start_time = round(time())
-
-        if self.print_animation:
-            if functions.check_time_scale(self.time_scale) < 0.002 :
-                    self.time_scale = 0.002
-            self.screen.print_screen()  #Initial screen printing.
-        else:
-            self.time_scale = 0
-
-        end = False
-        try:
-            while True:    # Loop: This simulation will run until user press ctrl+C.
-                if end == False and self.dynamic_cashier_generation:
-                    try:
-                        for i in range(0, len(self.cashier_quantity)):
-                            if self.clock >= self.cashier_quantity[i][0] and self.clock < self.cashier_quantity[i + 1][0]:
-                                if len(self.cashiers) == 0:
-                                    for j in range(0, self.cashier_quantity[i][1]):
-                                        self.inactive_cashiers[0].status = "activating"
-                                        self.cashiers.append(self.inactive_cashiers[0])
-                                        self.inactive_cashiers.remove(self.inactive_cashiers[0])
-                                elif self.cashier_quantity[i][1] - len(self.cashiers) < 0:
-                                    for j in range(1, abs(self.cashier_quantity[i][1] - len(self.cashiers)) + 1):
-                                        self.cashiers[-j].open_queue = False
-                                elif self.cashier_quantity[i][1] - len(self.cashiers) > 0:
-                                    for j in range(0, self.cashier_quantity[i][1] - len(self.cashiers)):
-                                        self.inactive_cashiers[0].status = "activating"
-                                        self.cashiers.append(self.inactive_cashiers[0])
-                                        self.inactive_cashiers.remove(self.inactive_cashiers[0])
-                    except:
-                        raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} Se debe proporcionar la cantidad de cajeros por cuartiles en una lista en cashier_quantity.")
+            if self.dynamic_cashier_generation:
+                functions.generate_cashiers(self, self.cashiers_y_axis, self.scanning_time, self.dynamic_scanning_time)
+                self.inactive_cashiers = self.cashiers.copy()
+                self.cashiers = []
+                for cashier in self.inactive_cashiers:
+                    functions.delete_cashier_queue(self.screen, cashier)
                 
-                for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
-                    match cashier.status:
-                        case "activating" :
-                            cashier.spawn()
-                            functions.generate_cashier_queue(self.screen, cashier)
-                            cashier.status = "available"
-                            cashier.open_queue = True
-                        case "busy":   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
-                            if self.clock > cashier.current_customer_complete_time:
-                                cashier.release_customer()
-                        case "available":  # If the cashier is available and there is someone in their queue, call them.
-                            if len(cashier.customer_queue) == 0 and cashier.open_queue == False:
-                                functions.delete_cashier_queue(self.screen, cashier)
-                                cashier.disappear()
-                                self.inactive_cashiers.append(cashier)
-                                self.cashiers.remove(cashier)
-                            else:
-                                cashier.call_customer()
+                try:
+                    for i in range(0, len(self.cashier_quantity)):
+                        if i + 1 < len(self.cashier_quantity):
+                            if self.cashier_quantity[i][1] - self.cashier_quantity[i + 1][1] > 0:
+                                self.cashier_quantity[i + 1][0] += 1800
+                            if self.cashier_quantity[i][1] > len(self.cashiers) + len(self.inactive_cashiers):
+                                raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} La cantidad máxima de cajeros es {colors.Regular.bold}{len(self.cashiers) + len(self.inactive_cashiers)}{colors.Text.end}.")
+                except:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser una lista conteniendo la cantidad de cajeros por cuartil.")
+            else:
+                try:
+                    functions.generate_cashiers_n(self, self.cashier_quantity, self.cashiers_y_axis, self.scanning_time, self.dynamic_scanning_time)
+                except:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} cashier_quantity debe ser integer.")
 
-                if self.customer_count < self.customer_quantity and self.clock < self.simulation_time:
-                    if end == False and self.clock > next_arrival:
-                        if self.dynamic_arrival_time:
+            match self.arrival_time_distribution:
+                case "exponential":
+                    arrival_distribution = np_random.exponential
+                case "poisson":
+                    arrival_distribution = np_random.poisson
+                case "":
+                    arrival_distribution = np_random.exponential
+                case _:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} Distribución estadística no compatible para arrival_time_distribution.")
                 
-                            for i in range(0, len(self.arrival_time)):
-                                if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
-                                    avg_arrival_time = self.arrival_time[i][1]
+            if self.dynamic_arrival_time:
+                try:
+                    self.clock = self.arrival_time[0][0]
+                    avg_arrival_time = self.arrival_time[0][1]
+                    next_arrival = self.clock + arrival_distribution(avg_arrival_time)
+                except:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser una lista conteniendo las distribuciones.")
+            else:
+                try:
+                    avg_arrival_time = self.arrival_time
+                except:
+                    raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} arrival_time debe ser un integer.") 
+                
+                next_arrival = arrival_distribution(avg_arrival_time)
 
-                                    if avg_arrival_time == 0:
-                                        end = True
+            start_time = round(time())
 
-                        customer = Customer(self, functions.random_customer_kind(self.observer_customer_probability), minimum_cart_items=self.minimum_cart_items, maximum_cart_items=self.maximum_cart_items)  # Create a customer; "observer" customer is generated with a probability of 3%.
-                        customer.customer_id = self.customer_count + 1
-                        customer.spawn(0,28)    # Spawn point set in (0,28).
-                        self.customer_count += 1
-                        next_arrival += arrival_distribution(avg_arrival_time)
-                else:
-                    end = True
+            if self.print_animation:
+                if functions.check_time_scale(self.time_scale) < 0.002 :
+                        self.time_scale = 0.002
+                self.screen.print_screen()  #Initial screen printing.
+            else:
+                self.time_scale = 0
+
+            end = False
+            try:
+                while True:    # Loop: This simulation will run until user press ctrl+C.
+                    if end == False and self.dynamic_cashier_generation:
+                        try:
+                            for i in range(0, len(self.cashier_quantity)):
+                                if self.clock >= self.cashier_quantity[i][0] and self.clock < self.cashier_quantity[i + 1][0]:
+                                    if len(self.cashiers) == 0:
+                                        for j in range(0, self.cashier_quantity[i][1]):
+                                            self.inactive_cashiers[0].status = "activating"
+                                            self.cashiers.append(self.inactive_cashiers[0])
+                                            self.inactive_cashiers.remove(self.inactive_cashiers[0])
+                                    elif self.cashier_quantity[i][1] - len(self.cashiers) < 0:
+                                        for j in range(1, abs(self.cashier_quantity[i][1] - len(self.cashiers)) + 1):
+                                            self.cashiers[-j].open_queue = False
+                                    elif self.cashier_quantity[i][1] - len(self.cashiers) > 0:
+                                        for j in range(0, self.cashier_quantity[i][1] - len(self.cashiers)):
+                                            self.inactive_cashiers[0].status = "activating"
+                                            self.cashiers.append(self.inactive_cashiers[0])
+                                            self.inactive_cashiers.remove(self.inactive_cashiers[0])
+                        except:
+                            raise Exception(f"{colors.Bold.red}Error:{colors.Text.end} Se debe proporcionar la cantidad de cajeros por cuartiles en una lista en cashier_quantity.")
                     
-                if len(self.customers) > 0:
-                    for customer in self.customers:    # Evaluates the status for each customer in the simulation an execute a method or action according their status.
-                        match customer.status:
-                            case "exiting":
-                                customer.exit_store_clocked()
-                            case "spawned":
-                                customer.choose_queue()
-                            case "moving to queue":
-                                customer.move_to_queue_clocked()
-                            case "in queue":
-                                customer.move_in_queue_clocked()
-                                if customer == customer.chosen_cashier.customer_queue[-1] and customer.chosen_cashier.customer_queue.index(customer) != 0:
-                                    customer.search_different_queue()
-                            case "changing queue":
-                                customer.change_queue_clocked()
-                            case "finished":
-                                self.customers.remove(customer)
+                    for cashier in self.cashiers:  # Evaluates the status for each cashier in the simulation an execute a method or action according their status.
+                        match cashier.status:
+                            case "activating" :
+                                cashier.spawn()
+                                functions.generate_cashier_queue(self.screen, cashier)
+                                cashier.status = "available"
+                                cashier.open_queue = True
+                                cashier.open_time = self.clock
+                            case "busy":   # If the cashier is busy (serving a customer), check if simulation's internal clock is equal to the time they finish attending the customer. If the times are the same, release the customer.
+                                if self.clock > cashier.current_customer_complete_time:
+                                    cashier.release_customer()
+                            case "available":  # If the cashier is available and there is someone in their queue, call them.
+                                if (len(cashier.customer_queue) == 0 and cashier.open_queue == False) or (len(cashier.customer_queue) == 0 and end):
+                                    functions.delete_cashier_queue(self.screen, cashier)
+                                    cashier.disappear()
+                                    self.inactive_cashiers.append(cashier)
+                                    self.cashiers.remove(cashier)
+                                    cashier.close_time = self.clock
+                                else:
+                                    cashier.call_customer()
+                                    for i in range(0, len(self.arrival_time)):
+                                        if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                                            key = self.arrival_time[i][0]
+                                            if key in cashier.average_attention_time:
+                                                cashier.average_attention_time[key].append(cashier.current_customer_complete_time-self.clock)
+                    
+                    for i in range(0, len(self.arrival_time)):
+                        if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                            key = self.arrival_time[i][0]
+                            if self.second_counter >= 60:
+                                for cashier in self.cashiers:
+                                    waiting_time = []
+                                    for customer in cashier.customer_queue:
+                                        waiting_time.append(self.clock - customer.queue_arrival_time)
 
-                if self.print_animation:
-                    self.screen.print_screen()
+                                    if key in cashier.average_waiting_time:
+                                        if len(waiting_time) > 0:
+                                            cashier.average_waiting_time[key].append(mean(waiting_time))
+                                        if len(cashier.customer_queue) > 0:
+                                            cashier.average_people_in_queue[key].append(len(cashier.customer_queue))
 
-                    print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}                        {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
+                    if self.customer_count < self.customer_quantity and self.clock < self.simulation_time:
+                        if end == False and self.clock > next_arrival:
+                            if self.dynamic_arrival_time:
+                    
+                                for i in range(0, len(self.arrival_time)):
+                                    if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                                        avg_arrival_time = self.arrival_time[i][1]
 
-                    print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
+                                        if avg_arrival_time == 0:
+                                            end = True
 
-                    if len(self.waiting_times) > 0:
-                        print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                            customer = Customer(self, functions.random_customer_kind(self.observer_customer_probability), minimum_cart_items=self.minimum_cart_items, maximum_cart_items=self.maximum_cart_items)  # Create a customer; "observer" customer is generated with a probability of 3%.
+                            customer.customer_id = self.customer_count + 1
+                            customer.spawn(0,28)    # Spawn point set in (0,28).
+                            customer.arrival_time = self.clock
+                            self.customer_count += 1
+                            next_arrival += arrival_distribution(avg_arrival_time)
+                    else:
+                        end = True
+                        
+                    if len(self.customers) > 0:
+                        for customer in self.customers:    # Evaluates the status for each customer in the simulation an execute a method or action according their status.
+                            match customer.status:
+                                case "exiting":
+                                    customer.exit_store_clocked()
+                                case "spawned":
+                                    customer.choose_queue()
+                                case "moving to queue":
+                                    customer.move_to_queue_clocked()
+                                case "in queue":
+                                    customer.move_in_queue_clocked()
+                                    if customer == customer.chosen_cashier.customer_queue[-1] and customer.chosen_cashier.customer_queue.index(customer) != 0:
+                                        customer.search_different_queue()
+                                case "changing queue":
+                                    customer.change_queue_clocked()
+                                case "finished":
+                                    customer.exit_time = self.clock
+                                    self.statistics["customers"].loc[len(self.statistics["customers"])] = [self.i, customer.customer_id, timedelta(seconds=round(customer.arrival_time)), customer.paying_arrival_time - customer.queue_arrival_time, customer.attention_time_span, timedelta(seconds=round(self.clock)), customer.cart_size]
+                                    self.customers.remove(customer)
 
-                    for cashier in self.cashiers:
-                        print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
-                        if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
-                            print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
+                    if self.print_animation:
+                        self.screen.print_screen()
 
-                if self.time_scale > 0:
-                    sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
+                        print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}                        {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
 
-                if end and len(self.customers) == 0:
-                    break
+                        print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
 
-                self.clock += 1   # Increase 1 second the internal clock.
-        
-            print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
-            print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
-            print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
-            print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                        if len(self.waiting_times) > 0:
+                            print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
-        except KeyboardInterrupt:
-            print(f"{colors.Bold.red}La simulación ha sido finalizada por el usuario.{colors.Text.end}")
-            print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
-            print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
-            print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                        for cashier in self.cashiers:
+                            if cashier.current_customer != None:
+                                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id} Items: {cashier.current_customer.cart_size}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
+                            else:
+                                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
+                            if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
+                                print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
+
+                    if self.time_scale > 0:
+                        sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
+
+                    if end and len(self.customers) == 0:
+                        break
+                    
+                    if self.second_counter >= 60:
+                        self.second_counter = 0
+                    self.clock += 1
+                    self.second_counter += 1   # Increase 1 second the internal clock.
+            
+                print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
+                print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
+                print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
+                print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+
+                for cashier in self.inactive_cashiers:
+                    self.statistics["cashier_usage"].loc[len(self.statistics["cashier_usage"])] = [self.i, cashier.cashier_id, timedelta(seconds=round(cashier.open_time)), timedelta(seconds=round(cashier.close_time)), cashier.busy_time]
+                    
+                    for t, v in cashier.average_waiting_time.items():
+                        self.statistics["cashier_per_hour"].loc[len(self.statistics["cashier_per_hour"])] = [self.i, cashier.cashier_id, timedelta(seconds=round(t)), timedelta(seconds=round(t + 3600)), functions.safe_rounded_mean(cashier.average_waiting_time[t]), functions.safe_rounded_mean(cashier.average_people_in_queue[t]), functions.safe_rounded_mean(cashier.average_attention_time[t])]
+
+                for k, df in self.statistics.items():
+                    df.to_excel(f"{k}-{datetime.now()}.xlsx")
+
+            except KeyboardInterrupt:
+                print(f"{colors.Bold.red}La simulación ha sido finalizada por el usuario.{colors.Text.end}")
+                print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
+                print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
+                print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.
 class Screen:

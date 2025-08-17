@@ -3,6 +3,7 @@
 
 # Modules to use in this file:
 from math import inf as infinite    # Infinite number is used by Customer to chose Cashier.
+from numpy import nan
 from numpy import random as np_random
 from random import triangular
 import colors   # Custom module: Allows to modify printed text.
@@ -62,6 +63,67 @@ class Cashier(Entity):
         self.open_queue = False
         self.dynamic_scanning_time = dynamic_scanning_time
 
+        ## Statistics
+        # Cashier occupancy
+        self.open_time = 0
+        self.close_time = 0
+        self.busy_time = 0
+
+        self.average_waiting_time = {
+            25200: [],
+            28800: [],
+            32400: [],
+            36000: [],
+            39600: [],
+            43200: [],
+            46800: [],
+            50400: [],
+            54000: [],
+            57600: [],
+            61200: [],
+            64800: [],
+            68400: [],
+            72000: [],
+            75600: [],
+            79200: []
+        }
+        self.average_people_in_queue = {
+            25200: [],
+            28800: [],
+            32400: [],
+            36000: [],
+            39600: [],
+            43200: [],
+            46800: [],
+            50400: [],
+            54000: [],
+            57600: [],
+            61200: [],
+            64800: [],
+            68400: [],
+            72000: [],
+            75600: [],
+            79200: []
+        }
+        self.average_attention_time = {
+            25200: [],
+            28800: [],
+            32400: [],
+            36000: [],
+            39600: [],
+            43200: [],
+            46800: [],
+            50400: [],
+            54000: [],
+            57600: [],
+            61200: [],
+            64800: [],
+            68400: [],
+            72000: [],
+            75600: [],
+            79200: []
+        }
+
         environment.cashiers.append(self)   # Automatically appends the cashier to the environment's cashier list.
         functions.generate_cashier_queue(environment.screen, self)   # Automatically creates the queue design for the cashier, from y_location to the main line.
 
@@ -91,7 +153,10 @@ class Cashier(Entity):
                     for i in range(0,self.current_customer.cart_size):
                         self.current_customer_complete_time += np_random.exponential(self.average_scan_speed)
                 else:
-                    self.current_customer_complete_time = self.environment.clock + (self.current_customer.cart_size * self.scan_speed)   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
+                    self.current_customer_complete_time = self.environment.clock + (self.current_customer.cart_size * self.average_scan_speed)   # Calculate the time it will takes the cashier to scan all the items in the customer's cart. It multiplies the item quantity and its scan speed.
+                
+                self.busy_time += self.current_customer.cart_size * self.average_scan_speed
+                self.current_customer.attention_time_span = self.current_customer.cart_size * self.average_scan_speed
 
                 self.current_customer.status = "paying" # Change customer's status to "paying".
                 self.status = "busy"    # Change its own status to "busy".
@@ -143,8 +208,12 @@ class Customer(Entity):
         self.cart_size = round(triangular(minimum_cart_items,maximum_cart_items))
         self.status = "spawned"
         self.chosen_cashier = None
+        # Statistics
+        self.arrival_time = 0
         self.queue_arrival_time = 0
         self.paying_arrival_time = 0
+        self.attention_time_span = 0
+        self.exit_time = 0
 
         environment.customers.append(self)  # Assigns customer to environment list.
     

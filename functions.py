@@ -2,10 +2,12 @@
 
 # Modules to use in this file:
 from itertools import zip_longest       # Merge list of different sizes.
+from numpy import nan, mean
 from numpy import random as np_random   # To generate a random number using exponential average.
 from random import random   # To create random values.
 import colors               # To print in colors.
 import os                   # To access system commands.
+import pandas as pd
 
 def clear_screen():
     """
@@ -156,3 +158,9 @@ def random_customer_kind(p_observer_kind: float):
         return "observer"
     else:
         return "regular"
+    
+def safe_rounded_mean(data: list):
+    if len(data) > 0:
+        return round(mean(data))
+    else:
+        return 0
