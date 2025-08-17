@@ -68,6 +68,7 @@ class Cashier(Entity):
         self.open_time = 0
         self.close_time = 0
         self.busy_time = 0
+        self.customer_served = 0
 
         self.average_waiting_time = {
             25200: [],
@@ -163,7 +164,7 @@ class Cashier(Entity):
 
                 self.current_customer.paying_arrival_time = self.environment.clock
                 self.environment.waiting_times.append(self.current_customer.paying_arrival_time-self.current_customer.queue_arrival_time)
-    
+
     def release_customer(self):
         """
         This releases the customer when their cart was completed scanned and remove the customer from cashier's list.
@@ -173,6 +174,7 @@ class Cashier(Entity):
         self.current_customer.status = "exiting"    # Change customer's status to "exiting".
         self.customer_queue.remove(self.current_customer)   # Remove current customer from the queue.
         self.current_customer = None    # Overwrite current customer to None.
+        self.customer_served += 1
 
     def disappear(self):
         if self.icon != "  ":

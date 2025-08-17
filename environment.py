@@ -64,7 +64,7 @@ class Environment:
         self.cashier_quantity = 5
 
         self.statistics = {
-            "cashier_usage": pd.DataFrame(data=None, columns=["Iteración", "Cajero ID", "Hora apertura", "Hora cierre", "Tiempo ocupado"]),
+            "cashier_usage": pd.DataFrame(data=None, columns=["Iteración", "Cajero ID", "Hora apertura", "Hora cierre", "Tiempo ocupado", "Clientes atendidos"]),
             "customers": pd.DataFrame(data=None, columns=["Iteración", "Cliente ID", "Hora llegada", "Tiempo fila", "Tiempo atención", "Hora salida", "Tamaño carrito"]),
             "cashier_per_hour": pd.DataFrame(data=None, columns=["Iteración","Cajero ID", "Hora inicio", "Hora fin", "Tiempo promedio fila", "Longitud promedio fila", "Tiempo promedio atención"])
         }
@@ -74,6 +74,7 @@ class Environment:
         self.statistics["cashier_usage"]["Hora apertura"] = self.statistics["cashier_usage"]["Hora apertura"].astype("timedelta64[ns]")
         self.statistics["cashier_usage"]["Hora cierre"] = self.statistics["cashier_usage"]["Hora cierre"].astype("timedelta64[ns]")
         self.statistics["cashier_usage"]["Tiempo ocupado"] = self.statistics["cashier_usage"]["Tiempo ocupado"].astype("int64")
+        self.statistics["cashier_usage"]["Clientes atendidos"] = self.statistics["cashier_usage"]["Clientes atendidos"].astype("int64")
         self.statistics["customers"]["Iteración"] = self.statistics["customers"]["Iteración"].astype("int64")
         self.statistics["customers"]["Cliente ID"] = self.statistics["customers"]["Cliente ID"].astype("int64")
         self.statistics["customers"]["Hora llegada"] = self.statistics["customers"]["Hora llegada"].astype("timedelta64[ns]")
@@ -247,11 +248,12 @@ class Environment:
                                     cashier.close_time = self.clock
                                 else:
                                     cashier.call_customer()
-                                    for i in range(0, len(self.arrival_time)):
-                                        if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
-                                            key = self.arrival_time[i][0]
-                                            if key in cashier.average_attention_time:
-                                                cashier.average_attention_time[key].append(cashier.current_customer_complete_time-self.clock)
+                                    if isinstance(cashier.current_customer,Customer):
+                                        for i in range(0, len(self.arrival_time)):
+                                            if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                                                key = self.arrival_time[i][0]
+                                                if key in cashier.average_attention_time:
+                                                    cashier.average_attention_time[key].append(cashier.current_customer_complete_time - self.clock)
                     
                     for i in range(0, len(self.arrival_time)):
                         if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
@@ -305,7 +307,7 @@ class Environment:
                                     customer.change_queue_clocked()
                                 case "finished":
                                     customer.exit_time = self.clock
-                                    self.statistics["customers"].loc[len(self.statistics["customers"])] = [self.i, customer.customer_id, timedelta(seconds=round(customer.arrival_time)), customer.paying_arrival_time - customer.queue_arrival_time, customer.attention_time_span, timedelta(seconds=round(self.clock)), customer.cart_size]
+                                    self.statistics["customers"].loc[len(self.statistics["customers"])] = [self.i, customer.customer_id, str(timedelta(seconds=round(customer.arrival_time))), customer.paying_arrival_time - customer.queue_arrival_time, customer.attention_time_span, str(timedelta(seconds=round(self.clock))), customer.cart_size]
                                     self.customers.remove(customer)
 
                     if self.print_animation:
@@ -343,19 +345,21 @@ class Environment:
                 print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
                 for cashier in self.inactive_cashiers:
-                    self.statistics["cashier_usage"].loc[len(self.statistics["cashier_usage"])] = [self.i, cashier.cashier_id, timedelta(seconds=round(cashier.open_time)), timedelta(seconds=round(cashier.close_time)), cashier.busy_time]
+                    self.statistics["cashier_usage"].loc[len(self.statistics["cashier_usage"])] = [self.i, cashier.cashier_id, str(timedelta(seconds=round(cashier.open_time))), str(timedelta(seconds=round(cashier.close_time))), cashier.busy_time, cashier.customer_served]
                     
                     for t, v in cashier.average_waiting_time.items():
-                        self.statistics["cashier_per_hour"].loc[len(self.statistics["cashier_per_hour"])] = [self.i, cashier.cashier_id, timedelta(seconds=round(t)), timedelta(seconds=round(t + 3600)), functions.safe_rounded_mean(cashier.average_waiting_time[t]), functions.safe_rounded_mean(cashier.average_people_in_queue[t]), functions.safe_rounded_mean(cashier.average_attention_time[t])]
-
-                for k, df in self.statistics.items():
-                    df.to_excel(f"{k}-{datetime.now()}.xlsx")
+                        self.statistics["cashier_per_hour"].loc[len(self.statistics["cashier_per_hour"])] = [self.i, cashier.cashier_id, str(timedelta(seconds=round(t))), str(timedelta(seconds=round(t + 3600))), functions.safe_rounded_mean(cashier.average_waiting_time[t]), functions.safe_rounded_mean(cashier.average_people_in_queue[t]), functions.safe_rounded_mean(cashier.average_attention_time[t])]
 
             except KeyboardInterrupt:
                 print(f"{colors.Bold.red}La simulación ha sido finalizada por el usuario.{colors.Text.end}")
                 print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
                 print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
                 print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+
+        for k, df in self.statistics.items():
+                    file_name = f"{k}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx"
+                    df.to_excel(file_name)
+                    print(f"\"{file_name}\" saved.")
 
 ## SCREEN CLASS WAS RETRIEVED FROM A PAST PROJECT. It could be improved.
 class Screen:

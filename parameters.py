@@ -11,7 +11,7 @@ simulation_parameters = {
     "customer_quantity": infinite,              # Listo
     "simulation_time": infinite,                # Listo
     "arrival_time_distribution": "poisson", # Listo
-    "iterations": 1,
+    "iterations": 10,
 
     # Fixed parameters
     "arrival_time": market.Popular_Hours.saturday_modified, # Listo
