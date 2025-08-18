@@ -315,7 +315,7 @@ class Environment:
 
                         print(f"{colors.Regular.bold}Tiempo:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}                        {colors.Regular.bold}Tiempo real:{colors.Text.end} {str(timedelta(seconds=round(time())-start_time))}")
 
-                        print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
+                        """print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
 
                         if len(self.waiting_times) > 0:
                             print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
@@ -326,7 +326,7 @@ class Environment:
                             else:
                                 print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
                             if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
-                                print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
+                                print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")"""
 
                     if self.time_scale > 0:
                         sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
@@ -342,7 +342,7 @@ class Environment:
                 print(f"{colors.Bold.green}La simulación ha finalizado.{colors.Text.end}")
                 print(f"{colors.Regular.bold}Total de clientes:{colors.Text.end} {self.customer_count}")
                 print(f"{colors.Regular.bold}Hora de finalización:{colors.Text.end} {str(timedelta(seconds=round(self.clock)))}")
-                print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                #print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
                 for cashier in self.inactive_cashiers:
                     self.statistics["cashier_usage"].loc[len(self.statistics["cashier_usage"])] = [self.i, cashier.cashier_id, str(timedelta(seconds=round(cashier.open_time))), str(timedelta(seconds=round(cashier.close_time))), cashier.busy_time, cashier.customer_served]
@@ -357,7 +357,7 @@ class Environment:
                 print(f"{colors.Regular.bold}Tiempo medio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
 
         for k, df in self.statistics.items():
-                    file_name = f"{k}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xlsx"
+                    file_name = f"{k}-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.xlsx"
                     df.to_excel(file_name)
                     print(f"\"{file_name}\" saved.")
 
