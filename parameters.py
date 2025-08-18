@@ -4,7 +4,7 @@ import market
 simulation_parameters = {
     # Running parameters
     "print_animation": True,                    # Listo
-    "time_scale": 0.002,                        # Listo
+    "time_scale": 0.005,                        # Listo
     "dynamic_arrival_time": True,               # Listo
     "dynamic_cashier_generation": True,         # Listo
     "dynamic_scanning_time": False,              # Listo

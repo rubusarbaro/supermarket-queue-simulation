@@ -255,10 +255,10 @@ class Environment:
                                                 if key in cashier.average_attention_time:
                                                     cashier.average_attention_time[key].append(cashier.current_customer_complete_time - self.clock)
                     
-                    for i in range(0, len(self.arrival_time)):
-                        if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
-                            key = self.arrival_time[i][0]
-                            if self.second_counter >= 60:
+                    if self.second_counter >= 60:
+                        for i in range(0, len(self.arrival_time)):
+                            if self.clock >= self.arrival_time[i][0] and self.clock < self.arrival_time[i+1][0]:
+                                key = self.arrival_time[i][0]
                                 for cashier in self.cashiers:
                                     waiting_time = []
                                     for customer in cashier.customer_queue:
@@ -318,15 +318,20 @@ class Environment:
                         """print(f"{colors.Regular.bold}Siguiente llegada:{colors.Text.end} {str(timedelta(seconds=round(next_arrival)))}")
 
                         if len(self.waiting_times) > 0:
-                            print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")
+                            print(f"{colors.Regular.bold}Promedio de espera:{colors.Text.end} {str(timedelta(seconds=round(mean(self.waiting_times))))}")"""
 
+                        print(f"\n{colors.Regular.bold}Estatus{colors.Text.end}")
+                        print(f"{colors.Regular.bold}Total clientes:{colors.Text.end} {self.customer_count}     {colors.Regular.bold}Atendidos:{colors.Text.end} {self.customer_count - len(self.customers)}     {colors.Regular.bold}En sistema:{colors.Text.end} {len(self.customers)}\n")
                         for cashier in self.cashiers:
                             if cashier.current_customer != None:
-                                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id} Items: {cashier.current_customer.cart_size}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
+                                print(f"{colors.Regular.bold}Cajero {cashier.cashier_id} ({colors.Text.end}{colors.Bold.red}Ocupado{colors.Text.end}{colors.Regular.bold}):{colors.Text.end} Atendiendo a Cliente {cashier.current_customer.customer_id} ({cashier.current_customer.cart_size} artículos)")
                             else:
-                                print(f"{colors.Regular.bold}(Cashier {cashier.cashier_id}) Next release:{colors.Text.end} {str(timedelta(seconds=round(cashier.current_customer_complete_time)))}")
-                            if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
-                                print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")"""
+                                print(f"{colors.Regular.bold}Cashier {cashier.cashier_id} ({colors.Text.end}{colors.Bold.green}Disponible{colors.Text.end}{colors.Regular.bold}){colors.Text.end}")
+                            #if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
+                            #    print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
+
+                        if end:
+                            print(f"{colors.Bold.red}Tienda cerrada:{colors.Text.end} Ya no se aceptan más clientes.")
 
                     if self.time_scale > 0:
                         sleep(1 * self.time_scale)  # Wait 0.1 second * scale before continue. 
