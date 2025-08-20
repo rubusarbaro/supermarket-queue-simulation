@@ -1,3 +1,5 @@
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/rubusarbaro/supermarket-queue-simulation)
+
 # 🛒 Supermarket Queue Simulation
 
 This is a terminal-based simulation that models how customers behave and move between checkout queues in a supermarket. The simulation includes regular and observer customers, different cashier queues, queue-switching behavior, and a graphical representation in the console using ASCII characters.
