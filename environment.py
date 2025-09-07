@@ -326,7 +326,7 @@ class Environment:
                             if cashier.current_customer != None:
                                 print(f"{colors.Regular.bold}Cajero {cashier.cashier_id} ({colors.Text.end}{colors.Bold.red}Ocupado{colors.Text.end}{colors.Regular.bold}):{colors.Text.end} Atendiendo a Cliente {cashier.current_customer.customer_id} ({cashier.current_customer.cart_size} artículos)")
                             else:
-                                print(f"{colors.Regular.bold}Cashier {cashier.cashier_id} ({colors.Text.end}{colors.Bold.green}Disponible{colors.Text.end}{colors.Regular.bold}){colors.Text.end}")
+                                print(f"{colors.Regular.bold}Cajero {cashier.cashier_id} ({colors.Text.end}{colors.Bold.green}Disponible{colors.Text.end}{colors.Regular.bold}){colors.Text.end}")
                             #if cashier.current_customer_complete_time < self.clock and cashier.current_customer != None:
                             #    print(f"{colors.Bold.red}Error:{colors.Text.end} Cajero {cashier.cashier_id} atascado.")
 
